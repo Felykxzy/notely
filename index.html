@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0f0b17">
-<title>Орбита</title>
+<title>Tonera</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=Manrope:wght@500;700;800&display=swap">
 <style>
 :root{--bg:#0f0b17;--panel:#18121f;--panel2:#221a2c;--ink:#f6eefb;--mute:#a597b3;--line:#2e2439;--a:#ffb454;--b:#ff4d8d;--grad:linear-gradient(135deg,#ffb454,#ff4d8d);
@@ -28,7 +28,7 @@ body::before{content:"";position:fixed;inset:-20%;z-index:0;pointer-events:none;
 @keyframes aur{to{transform:translate(4%,-3%) rotate(6deg) scale(1.08)}}
 #app{z-index:1}
 #side,#bar{background:color-mix(in srgb,var(--panel) 72%,transparent);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}
-.logo{font-family:var(--disp);letter-spacing:.14em;font-size:16px}
+.logo{font-family:var(--disp);letter-spacing:.12em;font-size:16px}
 .logo b{border-radius:50%;background:conic-gradient(from 200deg,var(--a),var(--b),var(--a));color:transparent;position:relative}
 .logo b::after{content:"";position:absolute;inset:9px;border-radius:50%;background:var(--panel)}
 .stage{display:grid;place-items:center;padding:6px 0 4px}
@@ -154,7 +154,7 @@ input[type=range]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;bac
 <body>
 <div id="app">
   <nav id="side" aria-label="Разделы">
-    <div class="logo"><b>♪</b><span>ОРБИТА</span></div>
+    <div class="logo"><b>♪</b><span>TONERA</span></div>
     <button class="nb on" data-v="home"><svg class="i" viewBox="0 0 24 24"><path d="M3 11l9-8 9 8v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg><span>Главная</span></button>
     <button class="nb" data-v="search"><svg class="i" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg><span>Поиск</span></button>
     <button class="nb" data-v="lib"><svg class="i" viewBox="0 0 24 24"><path d="M12 21s-8-5.2-8-11a4.5 4.5 0 0 1 8-2.8A4.5 4.5 0 0 1 20 10c0 5.8-8 11-8 11z"/></svg><span>Любимое</span></button>
@@ -163,7 +163,7 @@ input[type=range]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;bac
   </nav>
   <main id="main"></main>
   <footer id="bar" aria-label="Плеер">
-    <button class="now" id="nowB" aria-label="Открыть плеер"><div class="art" id="bArt"></div><div class="t"><b id="bT">Выбери трек</b><span id="bA">Орбита</span></div></button>
+    <button class="now" id="nowB" aria-label="Открыть плеер"><div class="art" id="bArt"></div><div class="t"><b id="bT">Выбери трек</b><span id="bA">Tonera</span></div></button>
     <div class="ctl">
       <div class="btns">
         <button class="ib" id="shB" aria-label="Перемешать"><svg class="i" viewBox="0 0 24 24"><path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg></button>
@@ -202,10 +202,10 @@ input[type=range]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;bac
 (function(){
 "use strict";
 var $=function(i){return document.getElementById(i)};
-var AUD="https://api.audius.co/v1",JAM="https://api.jamendo.com/v3.0",APP="orbita";
+var AUD="https://api.audius.co/v1",JAM="https://api.jamendo.com/v3.0",APP="tonera";
 var ST={jk:"",ak:"",likes:[],vol:80};
-try{var r=JSON.parse(localStorage.getItem("orbita1")||"{}");for(var k in r)ST[k]=r[k]}catch(e){}
-function save(){try{localStorage.setItem("orbita1",JSON.stringify(ST))}catch(e){}}
+try{var r=JSON.parse(localStorage.getItem("tonera1")||"{}");for(var k in r)ST[k]=r[k]}catch(e){}
+function save(){try{localStorage.setItem("tonera1",JSON.stringify(ST))}catch(e){}}
 function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
 function fmt(s){s=Math.max(0,Math.round(s||0));return Math.floor(s/60)+":"+("0"+s%60).slice(-2)}
 var toastT=0;function toast(t){var e=$("toast");e.textContent=t;e.className="on";clearTimeout(toastT);toastT=setTimeout(function(){e.className=""},3200)}
@@ -235,7 +235,7 @@ function play(list,i){Q=list.slice();qi=i;load(true)}
 function load(go){cur=Q[qi];if(!cur)return;au.src=cur.url;if(go)au.play().catch(function(){toast("Не получилось включить трек, пробую следующий");setTimeout(next,900)});
   ["bArt","fArt"].forEach(function(id){$(id).style.cssText=artCss(cur)});
   $("bT").textContent=$("fT").textContent=cur.title;$("bA").textContent=$("fA").textContent=cur.artist;
-  document.title=cur.title+" · Орбита";if(typeof paintVin==='function'){paintVin();theme()}$("fLike").classList.toggle("on",isLiked(cur));mark();
+  document.title=cur.title+" · Tonera";if(typeof paintVin==='function'){paintVin();theme()}$("fLike").classList.toggle("on",isLiked(cur));mark();
   if("mediaSession" in navigator){try{navigator.mediaSession.metadata=new MediaMetadata({title:cur.title,artist:cur.artist,artwork:cur.art?[{src:cur.art,sizes:"480x480"}]:[]})}catch(e){}}}
 function next(){if(!Q.length)return;if(shuffle)qi=Math.floor(Math.random()*Q.length);else qi=(qi+1)%Q.length;load(true)}
 function prev(){if(!Q.length)return;if(au.currentTime>3){au.currentTime=0;return}qi=(qi-1+Q.length)%Q.length;load(true)}
@@ -286,7 +286,7 @@ function home(){
     $("skO").remove();$("msg").innerHTML=warn(rs)?'<p class="msg">'+warn(rs)+'</p>':"";
     o.insertAdjacentHTML("afterbegin",orbitH(l));fit();
     $("gr").innerHTML=l.map(function(t,i){return cardH(t,"home",i)}).join("");
-    if(!l.length)$("cap").innerHTML='<b>Орбита пуста</b><span>Проверь интернет или зайди позже</span>';mark()});
+    if(!l.length)$("cap").innerHTML='<b>Tonera пуста</b><span>Проверь интернет или зайди позже</span>';mark()});
 }
 function doSearch(q){var g=$("sres");g.innerHTML='<div class="sk" style="height:60px;margin-bottom:8px"></div>'.repeat(5);
   settle([audSearch(q),jamSearch(q)]).then(function(rs){var l=merge(rs);lists.search=l;var w=warn(rs);
