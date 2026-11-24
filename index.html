@@ -286,7 +286,7 @@ function home(){
     $("skO").remove();$("msg").innerHTML=warn(rs)?'<p class="msg">'+warn(rs)+'</p>':"";
     o.insertAdjacentHTML("afterbegin",orbitH(l));fit();
     $("gr").innerHTML=l.map(function(t,i){return cardH(t,"home",i)}).join("");
-    if(!l.length)$("cap").innerHTML='<b>Tonera пуста</b><span>Проверь интернет или зайди позже</span>';mark()});
+    if(!l.length)$("cap").innerHTML='<b>Здесь пока пусто</b><span>Проверь интернет или зайди позже</span>';mark()});
 }
 function doSearch(q){var g=$("sres");g.innerHTML='<div class="sk" style="height:60px;margin-bottom:8px"></div>'.repeat(5);
   settle([audSearch(q),jamSearch(q)]).then(function(rs){var l=merge(rs);lists.search=l;var w=warn(rs);
