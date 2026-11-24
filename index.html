@@ -114,8 +114,11 @@ input[type=range]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;bac
 #full{position:fixed;inset:0;z-index:40;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:calc(20px + var(--sat)) 28px calc(24px + var(--sab));background:#0d0a1466;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);clip-path:circle(0 at 50% 100%);visibility:hidden;transition:clip-path .7s cubic-bezier(.7,0,.2,1),visibility 0s .7s}
 #full.on{clip-path:circle(150% at 50% 100%);visibility:visible;transition:clip-path .8s cubic-bezier(.7,0,.2,1)}
 #full .cl{position:absolute;top:calc(14px + var(--sat));right:18px}
-#full .cv{width:min(74vw,46vh,420px);aspect-ratio:1;border-radius:34px;box-shadow:0 40px 90px -24px #000,0 0 0 1px var(--line);transform:scale(.8) rotate(-4deg);transition:transform .9s var(--ease) .15s}
-#full.on .cv{transform:none}#full.pl .cv{animation:br 2.8s ease-in-out infinite}
+#full .cv{position:relative;z-index:0;width:min(74vw,46vh,420px);aspect-ratio:1;border-radius:34px;box-shadow:0 0 0 1px rgba(255,255,255,.14);opacity:0;transition:opacity .8s ease .2s}
+#full.on .cv{opacity:1}
+/* аура: размытая копия обложки светится вокруг, ничего не двигается */
+#full .cv::before{content:"";position:absolute;inset:-7%;z-index:-1;border-radius:46px;background:inherit;background-size:cover;background-position:center;filter:blur(38px) saturate(1.7) brightness(1.1);opacity:.9}
+#full .cv::after{content:"";position:absolute;inset:-26%;z-index:-2;border-radius:50%;background:inherit;background-size:cover;background-position:center;filter:blur(90px) saturate(1.8);opacity:.45}
 #full .t{text-align:center;max-width:90%}#full .t b{font-family:var(--disp);font-size:clamp(22px,4vw,36px);letter-spacing:-.02em;display:block;line-height:1.1}#full .t span{color:var(--mute)}
 #full .sk2{width:min(520px,100%)}#full .bt{gap:24px}#full .pp{width:72px;height:72px}
 .bars{display:flex;gap:4px;align-items:flex-end;height:34px}.bars i{width:5px;border-radius:3px;background:var(--grad);height:100%;transform-origin:bottom;transform:scaleY(.15);animation:eqk .9s ease-in-out infinite alternate;animation-play-state:var(--pl,paused)}
