@@ -11,11 +11,6 @@
 
 [![Открыть Notely](https://img.shields.io/badge/%E2%96%B6%20%D0%9E%D1%82%D0%BA%D1%80%D1%8B%D1%82%D1%8C-Notely-ff5d9e?style=for-the-badge&labelColor=150d20)](https://felykxzy.github.io/notely/)
 
-![Телефон](https://img.shields.io/badge/%D1%82%D0%B5%D0%BB%D0%B5%D1%84%D0%BE%D0%BD-%D0%B4%D0%B0-ff9f6b?style=flat-square&labelColor=150d20)
-![Планшет](https://img.shields.io/badge/%D0%BF%D0%BB%D0%B0%D0%BD%D1%88%D0%B5%D1%82-%D0%B4%D0%B0-ff9f6b?style=flat-square&labelColor=150d20)
-![Компьютер](https://img.shields.io/badge/%D0%BA%D0%BE%D0%BC%D0%BF%D1%8C%D1%8E%D1%82%D0%B5%D1%80-%D0%B4%D0%B0-ff9f6b?style=flat-square&labelColor=150d20)
-![Бесплатно](https://img.shields.io/badge/%D0%B1%D0%B5%D1%81%D0%BF%D0%BB%D0%B0%D1%82%D0%BD%D0%BE-%D0%B8_%D0%B1%D0%B5%D0%B7_%D1%80%D0%B5%D0%BA%D0%BB%D0%B0%D0%BC%D1%8B-7a5cff?style=flat-square&labelColor=150d20)
-
 </div>
 
 ---
