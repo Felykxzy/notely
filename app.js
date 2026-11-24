@@ -2,7 +2,7 @@
 "use strict";
 const $=i=>document.getElementById(i);
 const AUD="https://api.audius.co/v1",JAM="https://api.jamendo.com/v3.0",APP="notely";
-const ST={jk:"",ak:"",yk:"",likes:[],recent:[],vol:80,scene:"auto"};
+const CF=window.NOTELY||{};const ST={jk:"",ak:"",yk:"",likes:[],recent:[],vol:80,scene:"auto"};
 try{Object.assign(ST,JSON.parse(localStorage.getItem("notely2")||"{}"))}catch(e){}
 const save=()=>{try{localStorage.setItem("notely2",JSON.stringify(ST))}catch(e){}};
 const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
@@ -18,20 +18,21 @@ const fromAud=x=>{const a=x.artwork||{};return{id:"a"+x.id,src:"Audius",title:x.
 const fromJam=x=>({id:"j"+x.id,src:"Jamendo",title:x.name,artist:x.artist_name,art:x.image||x.album_image||"",url:x.audio,dur:x.duration||0});
 const audSearch=q=>getJ(AUD+"/tracks/search?query="+encodeURIComponent(q)+"&limit=24&"+aq()).then(j=>(j.data||[]).map(fromAud));
 const audTrend=g=>getJ(AUD+"/tracks/trending?limit=20&"+(g?"genre="+encodeURIComponent(g)+"&":"")+aq()).then(j=>(j.data||[]).map(fromAud));
-const jamQ=x=>{if(!ST.jk)return Promise.reject(new Error("nokey"));return getJ(JAM+"/tracks/?client_id="+encodeURIComponent(ST.jk)+"&format=json&limit=20&audioformat=mp32&imagesize=300&"+x).then(j=>(j.results||[]).map(fromJam))};
+const jk=()=>ST.jk||CF.jamendo||"";
+const jamQ=x=>{if(!jk())return Promise.reject(new Error("nokey"));return getJ(JAM+"/tracks/?client_id="+encodeURIComponent(jk())+"&format=json&limit=20&audioformat=mp32&imagesize=300&"+x).then(j=>(j.results||[]).map(fromJam))};
 const jamSearch=q=>jamQ("search="+encodeURIComponent(q));
 const jamTrend=()=>jamQ("order=popularity_week");
 const YT="https://www.googleapis.com/youtube/v3";
 const dur8601=d=>{const m=/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/.exec(d||"");return m?(+m[1]||0)*3600+(+m[2]||0)*60+(+m[3]||0):0};
 const decode=s=>{const t=document.createElement("textarea");t.innerHTML=s;return t.value};
 const fromYt=x=>{const sn=x.snippet||{},th=sn.thumbnails||{};return{id:"y"+(x.id.videoId||x.id),ytId:x.id.videoId||x.id,src:"YouTube",title:decode(sn.title||""),artist:decode((sn.channelTitle||"").replace(/ - Topic$/,"")),art:(th.high||th.medium||th.default||{}).url||"",url:"",dur:x.contentDetails?dur8601(x.contentDetails.duration):0}};
-const ytKey=()=>{if(!ST.yk)return Promise.reject(new Error("nokey"));return Promise.resolve(ST.yk)};
+const ytOn=()=>!!(ST.yk||CF.proxy);const ytKey=()=>{if(!ST.yk)return Promise.reject(new Error("nokey"));return Promise.resolve(ST.yk)};
 const ytErr=j=>{if(j&&j.error){const e=new Error(j.error.message||"yt");e.quota=(j.error.errors||[]).some(x=>/quota/i.test(x.reason));throw e}return j};
-const ytSearch=q=>ytKey().then(k=>getJ(YT+"/search?part=snippet&type=video&videoCategoryId=10&maxResults=20&q="+encodeURIComponent(q)+"&key="+k)).then(ytErr).then(j=>{const ids=(j.items||[]).map(i=>i.id.videoId).filter(Boolean);if(!ids.length)return[];return getJ(YT+"/videos?part=snippet,contentDetails&id="+ids.join(",")+"&key="+ST.yk).then(ytErr).then(v=>(v.items||[]).map(fromYt))});
-const ytTrend=()=>ytKey().then(k=>getJ(YT+"/videos?part=snippet,contentDetails&chart=mostPopular&videoCategoryId=10&maxResults=20&key="+k)).then(ytErr).then(v=>(v.items||[]).map(fromYt));
+const ytSearch=q=>(!ST.yk&&CF.proxy)?getJ(CF.proxy.replace(/\/$/,"")+"/search?q="+encodeURIComponent(q)).then(ytErr).then(v=>(v.items||[]).map(fromYt)):ytKey().then(k=>getJ(YT+"/search?part=snippet&type=video&videoCategoryId=10&maxResults=20&q="+encodeURIComponent(q)+"&key="+k)).then(ytErr).then(j=>{const ids=(j.items||[]).map(i=>i.id.videoId).filter(Boolean);if(!ids.length)return[];return getJ(YT+"/videos?part=snippet,contentDetails&id="+ids.join(",")+"&key="+ST.yk).then(ytErr).then(v=>(v.items||[]).map(fromYt))});
+const ytTrend=()=>(!ST.yk&&CF.proxy)?getJ(CF.proxy.replace(/\/$/,"")+"/trending").then(ytErr).then(v=>(v.items||[]).map(fromYt)):ytKey().then(k=>getJ(YT+"/videos?part=snippet,contentDetails&chart=mostPopular&videoCategoryId=10&maxResults=20&key="+k)).then(ytErr).then(v=>(v.items||[]).map(fromYt));
 const settle=ps=>Promise.all(ps.map(p=>p.then(v=>({ok:1,v}),e=>({ok:0,e}))));
 const merge=rs=>{const o=[],n=Math.max(0,...rs.map(r=>r.ok?r.v.length:0));for(let i=0;i<n;i++)rs.forEach(r=>{if(r.ok&&r.v[i])o.push(r.v[i])});return o};
-const warn=rs=>{const q=rs.find(r=>!r.ok&&r.e&&r.e.quota);if(q)return"Дневной лимит YouTube закончился. Он обновится завтра, пока ищи в Audius и Jamendo.";const bad=rs.filter(r=>!r.ok);if(!bad.length)return"";return bad.every(b=>b.e&&b.e.message==="nokey")?"Чтобы искать любые песни целиком, добавь бесплатный ключ YouTube в настройках (шестерёнка).":"Часть каталога сейчас не отвечает. Попробуй позже."};
+const warn=rs=>{const q=rs.find(r=>!r.ok&&r.e&&r.e.quota);if(q)return"Дневной лимит YouTube закончился. Он обновится завтра, пока ищи в Audius и Jamendo.";const bad=rs.filter(r=>!r.ok);if(!bad.length)return"";return bad.every(b=>b.e&&b.e.message==="nokey")?(ytOn()?"":"Чтобы искать любые песни целиком, добавь бесплатный ключ YouTube в настройках (значок N вверху)."):"Часть каталога сейчас не отвечает. Попробуй позже."};
 
 /* ---- фон под трек ---- */
 const SCN=Object.keys(BG.scenes);
@@ -119,7 +120,7 @@ function home(){
     const pool=ST.recent.slice(0,4);first.forEach(t=>{if(pool.length<4&&!pool.some(x=>x.id===t.id))pool.push(t)});lists.tl=pool;
     $("tl").innerHTML=pool.map((t,i)=>tileH(t,"tl",i)).join("");
     const w=warn(rs);
-    $("shl").innerHTML=(first.length?"":'<p class="msg" style="margin-top:20px">Ничего не нашлось. Проверь интернет или зайди позже.</p>')+(w&&(!ST.yk||!ST.jk)?'<p class="msg" style="margin-top:20px">'+w+'</p>':"")+html;mark()});
+    $("shl").innerHTML=(first.length?"":'<p class="msg" style="margin-top:20px">Ничего не нашлось. Проверь интернет или зайди позже.</p>')+(w&&(!ytOn()||!jk())?'<p class="msg" style="margin-top:20px">'+w+'</p>':"")+html;mark()});
 }
 function doSearch(q){const g=$("sres");g.innerHTML='<div class="sk" style="height:56px;margin-bottom:10px"></div>'.repeat(6);
   settle([ytSearch(q),audSearch(q),jamSearch(q)]).then(rs=>{const l=merge(rs);lists.search=l;const w=warn(rs);

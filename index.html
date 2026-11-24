@@ -191,13 +191,14 @@ input[type=range]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;bac
 <div id="ytw" class="mini" hidden><div id="ytp"></div></div>
 <div id="set"><div role="dialog" aria-label="Настройки">
   <h2>Настройки</h2>
-  <label>Ключ YouTube (YouTube Data API), бесплатный: <a href="https://console.cloud.google.com/apis/library/youtube.googleapis.com" target="_blank" rel="noopener">как получить</a><input id="yk" placeholder="начинается с AIza…" autocomplete="off"></label>
-  <label>Ключ Jamendo (client_id), бесплатный: <a href="https://devportal.jamendo.com" target="_blank" rel="noopener">devportal.jamendo.com</a><input id="jk" placeholder="например 1a2b3c4d" autocomplete="off"></label>
+  <label>Свой ключ YouTube (необязательно), бесплатный: <a href="https://console.cloud.google.com/apis/library/youtube.googleapis.com" target="_blank" rel="noopener">как получить</a><input id="yk" placeholder="начинается с AIza…" autocomplete="off"></label>
+  <label>Свой ключ Jamendo (необязательно), бесплатный: <a href="https://devportal.jamendo.com" target="_blank" rel="noopener">devportal.jamendo.com</a><input id="jk" placeholder="например 1a2b3c4d" autocomplete="off"></label>
   <label>Ключ Audius (api_key), только если попросит<input id="ak" placeholder="пусто — не нужен" autocomplete="off"></label>
   <label>Живой фон в полном плеере<select id="sc"></select></label>
   <div style="display:flex;gap:8px;justify-content:flex-end"><button class="btn g2" id="setNo">Закрыть</button><button class="btn" id="setOk">Сохранить</button></div>
 </div></div>
 <div id="toast" role="status"></div>
+<script src="config.js"></script>
 <script src="bg.js"></script>
 <script src="app.js"></script>
 </body>
