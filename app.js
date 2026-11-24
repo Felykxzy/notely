@@ -39,16 +39,25 @@ function mq(el,txt){el.textContent=txt;el.classList.remove("run");el.dataset.t=t
 function setIcons(p){const d=p?"M6 5h4v14H6zM14 5h4v14h-4z":"M8 5v14l11-7z";$("ppI").innerHTML=$("fPpI").innerHTML='<path d="'+d+'"/>';[$("ppB"),$("fPp")].forEach(b=>b.setAttribute("aria-label",p?"Пауза":"Играть"));
   document.documentElement.style.setProperty("--pl",p?"running":"paused");$("nowB").classList.toggle("pl",p);$("full").classList.toggle("pl",p);BG.play(p)}
 function play(list,i){Q=list.slice();qi=i;load(true)}
-function load(go){cur=Q[qi];if(!cur)return;au.src=cur.url;if(go)au.play().catch(()=>{toast("Трек не включился, пробую следующий");setTimeout(next,900)});
+let fails=0,tok=0;
+function resolve(t){if(t.src!=="Audius")return Promise.resolve(t.url);
+  /* просим у Audius прямую ссылку на звук: так надёжнее, чем переадресация */
+  return getJ(AUD+"/tracks/"+t.id.slice(1)+"/stream?no_redirect=true&"+aq()).then(j=>typeof j.data==="string"?j.data:t.url).catch(()=>t.url)}
+function load(go){cur=Q[qi];if(!cur)return;const my=++tok;
   $("bar").classList.remove("hid");$("bCv").style.cssText=$("fCv").style.cssText=artCss(cur);mq($("bT"),cur.title);$("bA").textContent=$("fA").textContent=cur.artist;$("fT").textContent=cur.title;
   document.title=cur.title+" · Notely";$("fLike").classList.toggle("on",isLiked(cur));paintBg();mark();
-  if("mediaSession" in navigator){try{navigator.mediaSession.metadata=new MediaMetadata({title:cur.title,artist:cur.artist,artwork:cur.art?[{src:cur.art,sizes:"480x480"}]:[]})}catch(e){}}}
+  if("mediaSession" in navigator){try{navigator.mediaSession.metadata=new MediaMetadata({title:cur.title,artist:cur.artist,artwork:cur.art?[{src:cur.art,sizes:"480x480"}]:[]})}catch(e){}}
+  resolve(cur).then(u=>{if(my!==tok)return;au.src=u;if(go)return au.play().then(()=>{fails=0}).catch(e=>failTrack(e))})}
+function failTrack(e){const why=e&&e.name==="NotAllowedError"?"Браузер не дал включить звук. Нажми на кнопку воспроизведения ещё раз.":"Трек не включился"+(e&&e.name?" ("+e.name+")":"");
+  if(e&&e.name==="NotAllowedError"){toast(why);return}
+  if(++fails>=3){toast("Не получается включить треки. Проверь интернет и попробуй другой трек.");fails=0;return}
+  toast(why+", пробую следующий");setTimeout(next,900)}
 const next=()=>{if(!Q.length)return;qi=shuf?Math.floor(Math.random()*Q.length):(qi+1)%Q.length;load(true)};
 const prev=()=>{if(!Q.length)return;if(au.currentTime>3){au.currentTime=0;return}qi=(qi-1+Q.length)%Q.length;load(true)};
 const toggle=()=>{if(!cur){toast("Выбери трек");return}au.paused?au.play().catch(()=>{}):au.pause()};
 au.addEventListener("play",()=>setIcons(true));au.addEventListener("pause",()=>setIcons(false));
 au.addEventListener("ended",()=>{if(rep){au.currentTime=0;au.play()}else next()});
-au.addEventListener("error",()=>{if(cur){toast("Трек не загрузился, пробую следующий");setTimeout(next,900)}});
+au.addEventListener("error",()=>{if(cur&&au.src){const c=au.error?au.error.code:0;failTrack({name:"код "+c})}});
 const rng=(el,p)=>el.style.setProperty("--p",p+"%");
 au.addEventListener("timeupdate",()=>{const d=au.duration||(cur&&cur.dur)||0,p=d?au.currentTime/d*1000:0;[$("seek"),$("fSeek")].forEach(s=>{if(!s.dataset.d){s.value=p;rng(s,p/10)}});$("cur").textContent=$("fCur").textContent=fmt(au.currentTime);$("dur").textContent=$("fDur").textContent=fmt(d)});
 [$("seek"),$("fSeek")].forEach(s=>{s.addEventListener("input",()=>{s.dataset.d=1;rng(s,s.value/10)});s.addEventListener("change",()=>{const d=au.duration||(cur&&cur.dur)||0;if(d)au.currentTime=s.value/1000*d;delete s.dataset.d})});
