@@ -93,6 +93,11 @@ h2::after{content:"";height:2px;flex:1;border-radius:2px;background:linear-gradi
 .sc canvas{position:absolute;inset:0;width:100%;height:100%}
 .sc span{position:absolute;left:0;right:0;bottom:0;padding:34px 14px 14px;background:linear-gradient(transparent,#000a);font-family:var(--disp);font-size:17px}
 .sc small{display:block;font-family:var(--body);font-weight:600;color:#ddd;font-size:12px}
+/* окно YouTube: видео обязано быть видно, поэтому оно маленькое в углу или большое в полном плеере */
+#ytw{position:fixed;z-index:45;right:16px;bottom:calc(112px + var(--sab));width:240px;aspect-ratio:16/9;border-radius:16px;overflow:hidden;background:#000;box-shadow:0 14px 40px -10px #000,0 0 0 1px var(--line);transition:all .6s var(--ease)}
+#ytw iframe,#ytw>div{width:100%;height:100%;display:block;border:0}
+#ytw.big{right:50%;bottom:50%;transform:translate(50%,calc(50% - 90px));width:min(88vw,720px);border-radius:24px;z-index:46;box-shadow:0 0 60px -6px var(--ac2),0 30px 80px -20px #000}
+@media (max-width:760px){#ytw{width:170px;bottom:calc(160px + var(--sab));right:12px}}
 /* плеер-плашка */
 #bar{position:fixed;left:50%;bottom:calc(16px + var(--sab));transform:translateX(-50%);width:min(860px,calc(100% - 28px));z-index:20;border-radius:26px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.5fr) auto;align-items:center;gap:16px;padding:10px 16px 10px 10px;transition:transform .6s var(--ease)}
 #bar.hid{transform:translate(-50%,300%);opacity:0;pointer-events:none}
@@ -197,9 +202,11 @@ input[type=range]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;bac
 <div id="set"><div role="dialog" aria-label="Настройки">
   <h2 style="margin:0">Настройки</h2>
   <label>Ключ Jamendo (client_id), бесплатный: <a href="https://devportal.jamendo.com" target="_blank" rel="noopener">devportal.jamendo.com</a><input id="jk" placeholder="например 1a2b3c4d" autocomplete="off"></label>
+  <label>Ключ YouTube (YouTube Data API), бесплатный: <a href="https://console.cloud.google.com/apis/library/youtube.googleapis.com" target="_blank" rel="noopener">как получить</a><input id="yk" placeholder="начинается с AIza…" autocomplete="off"></label>
   <label>Ключ Audius (api_key), только если попросит<input id="ak" placeholder="пусто — не нужен" autocomplete="off"></label>
   <div style="display:flex;gap:8px;justify-content:flex-end"><button class="btn g" id="setNo">Закрыть</button><button class="btn" id="setOk">Сохранить</button></div>
 </div></div>
+<div id="ytw" class="mini" hidden><div id="ytp"></div></div>
 <div id="toast" class="glass" role="status"></div>
 <script src="bg.js"></script>
 <script src="app.js"></script>
