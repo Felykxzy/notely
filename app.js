@@ -98,9 +98,17 @@ function scn(){const items=[["auto","Авто","Фон сам меняется �
   main.innerHTML='<div class="page"><h1 class="big">Живые<br><em>фоны</em></h1><p class="sub">Фон оживает, когда играет музыка. Выбери свой или оставь «Авто».</p><div class="scn st">'+items.map(i=>'<button class="sc'+(ST.scene===i[0]?' on':'')+'" data-s="'+i[0]+'"><canvas></canvas><span>'+i[1]+'<small>'+i[2]+'</small></span></button>').join("")+'</div></div>';stag();
   main.querySelectorAll(".sc").forEach(b=>{const n=b.dataset.s,c=b.querySelector("canvas");BG.thumb(c,n==="auto"?SCN[0]:n)});}
 const tabsEl=$("tabs"),ind=$("ind");
-function moveInd(){const b=tabsEl.querySelector(".tb.on");if(!b)return;ind.style.width=b.offsetWidth+"px";ind.style.transform="translateX("+(b.offsetLeft)+"px)"}
+function moveInd(){const b=tabsEl.querySelector(".tb.on");if(!b)return;ind.style.width=b.offsetWidth+"px";ind.style.setProperty("--tx",b.offsetLeft+"px")}
 function show(v){view=v;tabsEl.querySelectorAll(".tb").forEach(b=>b.classList.toggle("on",b.dataset.v===v));moveInd();({home,search,lib,scn})[v]();main.scrollTop=0}
-tabsEl.querySelectorAll(".tb").forEach(b=>b.onclick=()=>show(b.dataset.v));addEventListener("resize",moveInd);
+tabsEl.querySelectorAll(".tb").forEach(b=>b.onclick=()=>{if(dragged){dragged=false;return}show(b.dataset.v)});
+/* на телефоне «линзу» можно тянуть пальцем */
+let dragged=false,pd=null;
+tabsEl.addEventListener("pointerdown",e=>{if(innerWidth>760)return;const r=tabsEl.getBoundingClientRect();pd={x0:e.clientX,lx:e.clientX,r:r,moved:false,w:ind.offsetWidth};tabsEl.classList.add("press");try{tabsEl.setPointerCapture(e.pointerId)}catch(_){}});
+tabsEl.addEventListener("pointermove",e=>{if(!pd)return;if(Math.abs(e.clientX-pd.x0)>6)pd.moved=true;if(!pd.moved)return;const v=e.clientX-pd.lx;pd.lx=e.clientX;
+  const tx=Math.max(0,Math.min(pd.r.width-pd.w-10,e.clientX-pd.r.left-pd.w/2-5));ind.style.transition="none";ind.style.setProperty("--tx",tx+"px");ind.style.setProperty("--sx",1+Math.min(.22,Math.abs(v)/50))});
+function endPress(e){if(!pd)return;const m=pd.moved;pd=null;tabsEl.classList.remove("press");ind.style.transition="";ind.style.removeProperty("--sx");
+  if(m){dragged=true;setTimeout(()=>dragged=false,60);const cx=parseFloat(ind.style.getPropertyValue("--tx"))+ind.offsetWidth/2;let best=null,bd=1e9;tabsEl.querySelectorAll(".tb").forEach(b=>{const d=Math.abs(b.offsetLeft+b.offsetWidth/2-cx);if(d<bd){bd=d;best=b}});if(best)show(best.dataset.v)}}
+tabsEl.addEventListener("pointerup",endPress);tabsEl.addEventListener("pointercancel",endPress);addEventListener("resize",moveInd);
 main.addEventListener("click",e=>{
   const lk=e.target.closest(".like");if(lk){const t=lists[lk.dataset.k][+lk.dataset.i];like(t,lk);const on=isLiked(t);lk.classList.toggle("on",on);const s=lk.querySelector("svg");if(s)s.style.fill=on?"currentColor":"none";return}
   const sc=e.target.closest(".sc");if(sc){ST.scene=sc.dataset.s;save();main.querySelectorAll(".sc").forEach(x=>x.classList.toggle("on",x===sc));if(ST.scene==="auto")paintBg();else BG.set(ST.scene);toast("Фон: "+(ST.scene==="auto"?"Авто":BG.scenes[ST.scene].name));return}
