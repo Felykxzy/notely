@@ -2,12 +2,12 @@
 "use strict";
 const $=i=>document.getElementById(i);
 const AUD="https://api.audius.co/v1",JAM="https://api.jamendo.com/v3.0",APP="notely";
-const ST={jk:"",ak:"",yk:"",likes:[],vol:80,scene:"auto"};
+const ST={jk:"",ak:"",yk:"",likes:[],recent:[],vol:80,scene:"auto"};
 try{Object.assign(ST,JSON.parse(localStorage.getItem("notely2")||"{}"))}catch(e){}
 const save=()=>{try{localStorage.setItem("notely2",JSON.stringify(ST))}catch(e){}};
 const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const fmt=s=>{s=Math.max(0,Math.round(s||0));return Math.floor(s/60)+":"+("0"+s%60).slice(-2)};
-let toastT=0;const toast=t=>{const e=$("toast");e.textContent=t;e.className="glass on";clearTimeout(toastT);toastT=setTimeout(()=>e.className="glass",3200)};
+let toastT=0;const toast=t=>{const e=$("toast");e.textContent=t;e.className="on";clearTimeout(toastT);toastT=setTimeout(()=>e.className="",3200)};
 const hue=id=>{let h=0;const s=String(id);for(let i=0;i<s.length;i++)h=(h*131+s.charCodeAt(i)*977)%360;return h};
 const artCss=t=>t.art?"background-image:url('"+esc(t.art)+"')":"background-image:linear-gradient(135deg,hsl("+hue(t.id)+" 75% 58%),hsl("+(hue(t.id)+60)%360+" 75% 38%))";
 
@@ -43,7 +43,7 @@ const au=new Audio();au.preload="none";au.volume=ST.vol/100;
 let Q=[],qi=-1,shuf=false,rep=false,cur=null,view="home";
 const isLiked=t=>ST.likes.some(x=>x.id===t.id);
 const lists={};
-function mq(el,txt){el.textContent=txt;el.classList.remove("run");el.dataset.t=txt;requestAnimationFrame(()=>{if(el.scrollWidth>el.parentNode.clientWidth+2){el.textContent=txt+"   ·   "+txt+"   ·   ";el.classList.add("run")}})}
+function mq(el,txt){el.textContent=txt;el.classList.remove("run");el.dataset.t=txt;requestAnimationFrame(()=>{if(el.scrollWidth>el.parentNode.parentNode.clientWidth+2){el.textContent=txt+"   ·   "+txt+"   ·   ";el.classList.add("run")}})}
 function setIcons(p){const d=p?"M6 5h4v14H6zM14 5h4v14h-4z":"M8 5v14l11-7z";$("ppI").innerHTML=$("fPpI").innerHTML='<path d="'+d+'"/>';[$("ppB"),$("fPp")].forEach(b=>b.setAttribute("aria-label",p?"Пауза":"Играть"));
   document.documentElement.style.setProperty("--pl",p?"running":"paused");$("nowB").classList.toggle("pl",p);$("full").classList.toggle("pl",p);BG.play(p)}
 function play(list,i){Q=list.slice();qi=i;load(true)}
@@ -52,14 +52,14 @@ function ensureYT(){if(ypReady)return ypReady;ypReady=new Promise((res,rej)=>{co
   if(window.YT&&window.YT.Player){YT_=window.YT;go()}else{window.onYouTubeIframeAPIReady=()=>{YT_=window.YT;go()};const s=document.createElement("script");s.src="https://www.youtube.com/iframe_api";s.onerror=()=>rej(new Error("yt-load"));document.head.appendChild(s)}});return ypReady}
 let YT_=null;
 function ysc(e){if(!ymode)return;const S=window.YT.PlayerState;if(e.data===S.PLAYING){setIcons(true);fails=0;const d=yp.getDuration();if(d&&cur)cur.dur=d}else if(e.data===S.PAUSED)setIcons(false);else if(e.data===S.ENDED){if(rep){yp.seekTo(0);yp.playVideo()}else next()}}
-function ytick(){if(!ymode||!yp||!yp.getCurrentTime)return;const c=yp.getCurrentTime()||0,d=yp.getDuration()||(cur&&cur.dur)||0,p=d?c/d*1000:0;[$("seek"),$("fSeek")].forEach(s=>{if(!s.dataset.d){s.value=p;rng(s,p/10)}});$("cur").textContent=$("fCur").textContent=fmt(c);$("dur").textContent=$("fDur").textContent=fmt(d)}
+function ytick(){if(!ymode||!yp||!yp.getCurrentTime)return;const c=yp.getCurrentTime()||0,d=yp.getDuration()||(cur&&cur.dur)||0,p=d?c/d*1000:0;[$("seek"),$("fSeek")].forEach(s=>{if(!s.dataset.d){s.value=p;rng(s,p/10)}});mprog(p/10);$("cur").textContent=$("fCur").textContent=fmt(c);$("dur").textContent=$("fDur").textContent=fmt(d)}
 setInterval(ytick,500);
 function showYt(on){const w=$("ytw");w.hidden=!on;if(!on)w.classList.remove("big");else w.classList.toggle("big",$("full").classList.contains("on"));$("fCv").style.visibility=on?"hidden":""}
 function resolve(t){if(t.src==="YouTube")return Promise.resolve("");if(t.src!=="Audius")return Promise.resolve(t.url);
   return getJ(AUD+"/tracks/"+t.id.slice(1)+"/stream?no_redirect=true&"+aq()).then(j=>typeof j.data==="string"?j.data:t.url).catch(()=>t.url)}
 function load(go){cur=Q[qi];if(!cur)return;const my=++tok;
   $("bar").classList.remove("hid");$("bCv").style.cssText=$("fCv").style.cssText=artCss(cur);mq($("bT"),cur.title);$("bA").textContent=$("fA").textContent=cur.artist;$("fT").textContent=cur.title;
-  document.title=cur.title+" · Notely";$("fLike").classList.toggle("on",isLiked(cur));paintBg();mark();
+  ST.recent=[cur].concat(ST.recent.filter(x=>x.id!==cur.id)).slice(0,20);save();document.title=cur.title+" · Notely";$("fLike").classList.toggle("on",isLiked(cur));paintBg();mark();
   if("mediaSession" in navigator){try{navigator.mediaSession.metadata=new MediaMetadata({title:cur.title,artist:cur.artist,artwork:cur.art?[{src:cur.art,sizes:"480x480"}]:[]})}catch(e){}}
   if(cur.src==="YouTube"){au.pause();ymode=true;showYt(true);ensureYT().then(p=>{if(my!==tok)return;p.loadVideoById(cur.ytId);try{p.setVolume(ST.vol)}catch(e){}}).catch(()=>failTrack({name:"YouTube не загрузился"}));return}
   if(ymode){ymode=false;try{yp&&yp.pauseVideo()}catch(e){}showYt(false)}
@@ -74,57 +74,67 @@ const toggle=()=>{if(!cur){toast("Выбери трек");return}if(ymode&&yp){y
 au.addEventListener("play",()=>{if(!ymode)setIcons(true)});au.addEventListener("pause",()=>{if(!ymode)setIcons(false)});
 au.addEventListener("ended",()=>{if(ymode)return;if(rep){au.currentTime=0;au.play()}else next()});
 au.addEventListener("error",()=>{if(!ymode&&cur&&au.src){const c=au.error?au.error.code:0;failTrack({name:"код "+c})}});
-const rng=(el,p)=>el.style.setProperty("--p",p+"%");
-au.addEventListener("timeupdate",()=>{if(ymode)return;const d=au.duration||(cur&&cur.dur)||0,p=d?au.currentTime/d*1000:0;[$("seek"),$("fSeek")].forEach(s=>{if(!s.dataset.d){s.value=p;rng(s,p/10)}});$("cur").textContent=$("fCur").textContent=fmt(au.currentTime);$("dur").textContent=$("fDur").textContent=fmt(d)});
+const rng=(el,p)=>el.style.setProperty("--p",p+"%");const mprog=p=>$("mp").style.setProperty("--mp",Math.max(0,Math.min(100,p))+"%");
+au.addEventListener("timeupdate",()=>{if(ymode)return;const d=au.duration||(cur&&cur.dur)||0,p=d?au.currentTime/d*1000:0;[$("seek"),$("fSeek")].forEach(s=>{if(!s.dataset.d){s.value=p;rng(s,p/10)}});mprog(p/10);$("cur").textContent=$("fCur").textContent=fmt(au.currentTime);$("dur").textContent=$("fDur").textContent=fmt(d)});
 [$("seek"),$("fSeek")].forEach(s=>{s.addEventListener("input",()=>{s.dataset.d=1;rng(s,s.value/10)});s.addEventListener("change",()=>{if(ymode&&yp){const d=yp.getDuration()||(cur&&cur.dur)||0;if(d)yp.seekTo(s.value/1000*d,true);delete s.dataset.d;return}const d=au.duration||(cur&&cur.dur)||0;if(d)au.currentTime=s.value/1000*d;delete s.dataset.d})});
 $("vol").value=ST.vol;rng($("vol"),ST.vol);$("vol").addEventListener("input",function(){au.volume=this.value/100;ST.vol=+this.value;try{yp&&yp.setVolume(ST.vol)}catch(e){}rng(this,this.value);save()});
 $("ppB").onclick=$("fPp").onclick=toggle;$("nxB").onclick=$("fNx").onclick=next;$("prB").onclick=$("fPr").onclick=prev;
 $("shB").onclick=$("fSh").onclick=()=>{shuf=!shuf;$("shB").classList.toggle("on",shuf);$("fSh").classList.toggle("on",shuf);toast(shuf?"Перемешивание включено":"Перемешивание выключено")};
 $("rpB").onclick=function(){rep=!rep;this.classList.toggle("on",rep);toast(rep?"Повтор трека включён":"Повтор выключен")};
 $("fLike").onclick=e=>{if(cur)like(cur,e.currentTarget)};
-$("nowB").onclick=()=>{if(cur){$("full").classList.add("on");if(ymode)showYt(true)}};$("clB").onclick=()=>{$("full").classList.remove("on");if(ymode)showYt(true)};
+const openFull=()=>{if(!cur)return;$("full").classList.add("on");document.body.classList.add("fp");if(ymode)showYt(true)},closeFull=()=>{$("full").classList.remove("on");document.body.classList.remove("fp");if(ymode)showYt(true)};
+$("nowB").onclick=openFull;$("clB").onclick=closeFull;
 $("bars").innerHTML=Array.from({length:22},(_,i)=>'<i style="animation-delay:'+(-(i*47%100)/100)+'s;animation-duration:'+(.6+(i*13%7)/10)+'s"></i>').join("");
 if("mediaSession" in navigator){const m=navigator.mediaSession;[["play",()=>{if(ymode&&yp)yp.playVideo();else au.play()}],["pause",()=>{if(ymode&&yp)yp.pauseVideo();else au.pause()}],["nexttrack",next],["previoustrack",prev]].forEach(a=>{try{m.setActionHandler(a[0],a[1])}catch(e){}})}
-document.addEventListener("keydown",e=>{if(/INPUT|TEXTAREA/.test(e.target.tagName)&&e.target.type!=="range")return;if(e.code==="Space"){e.preventDefault();toggle()}if(e.key==="ArrowRight"&&e.shiftKey)next();if(e.key==="ArrowLeft"&&e.shiftKey)prev();if(e.key==="Escape")$("full").classList.remove("on")});
+document.addEventListener("keydown",e=>{if(/INPUT|TEXTAREA/.test(e.target.tagName)&&e.target.type!=="range")return;if(e.code==="Space"){e.preventDefault();toggle()}if(e.key==="ArrowRight"&&e.shiftKey)next();if(e.key==="ArrowLeft"&&e.shiftKey)prev();if(e.key==="Escape")closeFull()});
 function burst(el){const r=el.getBoundingClientRect();for(let i=0;i<7;i++){const h=document.createElement("div");h.className="hb";h.textContent=["💗","💖","✨","💞"][i%4];h.style.left=(r.left+r.width/2-9)+"px";h.style.top=(r.top+r.height/2-9)+"px";h.style.setProperty("--x",(Math.random()*90-45)+"px");h.style.animationDelay=(i*50)+"ms";document.body.appendChild(h);setTimeout(()=>h.remove(),1300)}}
 function like(t,btn){const i=ST.likes.findIndex(x=>x.id===t.id);if(i>=0)ST.likes.splice(i,1);else{ST.likes.unshift(t);if(btn)burst(btn)}save();const on=i<0;
   $("fLike").classList.toggle("on",!!cur&&isLiked(cur));document.querySelectorAll('[data-lk="'+t.id+'"]').forEach(b=>{b.classList.toggle("on",on);b.classList.remove("pop");void b.offsetWidth;b.classList.add("pop")});if(view==="lib")show("lib")}
 
 /* ---- экраны ---- */
 const main=$("main");
-const stag=()=>document.querySelectorAll(".st>*").forEach((e,i)=>e.style.setProperty("--n",Math.min(i,14)));
-const cardH=(t,k,i)=>'<button class="card" data-k="'+k+'" data-i="'+i+'" data-id="'+esc(t.id)+'"><div class="cv" style="'+artCss(t)+'"><div class="eqm"><i></i><i></i><i></i><i></i></div><div class="pl"><svg class="i f" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div></div><b>'+esc(t.title)+'</b><span>'+esc(t.artist)+'</span></button>';
+const PLAY='<svg class="i f" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>';
+const HEART='<svg viewBox="0 0 24 24"><path d="M12 21s-8-5.2-8-11a4.5 4.5 0 0 1 8-2.8A4.5 4.5 0 0 1 20 10c0 5.8-8 11-8 11z"/></svg>';
+const SHUF='<svg class="i" viewBox="0 0 24 24"><path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg>';
+const EQM='<div class="eqm"><i></i><i></i><i></i><i></i></div>';
+const sqH=(t,k,i)=>'<button class="sq" data-k="'+k+'" data-i="'+i+'" data-id="'+esc(t.id)+'"><div class="cv" style="'+artCss(t)+'">'+EQM+'</div><b><em>'+esc(t.title)+'</em>'+esc(t.artist)+'</b></button>';
+const ntH=(t,k,i)=>'<button class="sq nt" data-k="'+k+'" data-i="'+i+'" data-id="'+esc(t.id)+'"><div class="cv"><i style="'+artCss(t)+'"></i><span>Новый трек</span>'+EQM+'</div><b><em>'+esc(t.title)+'</em>'+esc(t.artist)+'</b></button>';
+const tileH=(t,k,i)=>'<button class="tile" data-k="'+k+'" data-i="'+i+'" data-id="'+esc(t.id)+'"><div class="cv" style="'+artCss(t)+'">'+EQM+'</div><div class="t"><b>'+esc(t.title)+'</b><span>'+esc(t.artist)+'</span></div></button>';
 const heart=(t,k,i)=>'<button class="like'+(isLiked(t)?' on':'')+'" data-lk="'+esc(t.id)+'" data-k="'+k+'" data-i="'+i+'" aria-label="В любимое"><svg class="i" viewBox="0 0 24 24" style="fill:'+(isLiked(t)?'currentColor':'none')+'"><path d="M12 21s-8-5.2-8-11a4.5 4.5 0 0 1 8-2.8A4.5 4.5 0 0 1 20 10c0 5.8-8 11-8 11z"/></svg></button>';
-const rowH=(t,k,i)=>'<div class="row" data-id="'+esc(t.id)+'"><div class="cv" style="'+artCss(t)+'"><div class="eqm" style="left:6px;bottom:6px"><i></i><i></i><i></i><i></i></div></div><button class="t" data-k="'+k+'" data-i="'+i+'"><b>'+esc(t.title)+'</b><span>'+esc(t.artist)+' · '+t.src+'</span></button><time>'+fmt(t.dur)+'</time>'+heart(t,k,i)+'</div>';
+const rowH=(t,k,i)=>'<div class="row" data-id="'+esc(t.id)+'"><div class="cv" style="'+artCss(t)+'">'+EQM+'</div><button class="t" data-k="'+k+'" data-i="'+i+'"><b>'+esc(t.title)+'</b><span>'+esc(t.artist)+' · '+t.src+'</span></button><time>'+fmt(t.dur)+'</time>'+heart(t,k,i)+'</div>';
 function mark(){document.querySelectorAll("[data-id]").forEach(e=>e.classList.toggle("cur",!!cur&&e.getAttribute("data-id")===cur.id))}
-const sbH=v=>'<label class="sb glass"><svg class="i" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg><input id="q" type="search" placeholder="Песня, исполнитель, жанр" value="'+esc(v||"")+'" enterkeyhint="search"></label>';
-function bindQ(){const q=$("q");if(!q)return;q.addEventListener("keydown",e=>{if(e.key==="Enter"&&q.value.trim()){if(view!=="search"){show("search");$("q").value=q.value}doSearch($("q").value.trim())}})}
-const hello=()=>{const h=new Date().getHours();return h<5?"Доброй ночи":h<12?"Доброе утро":h<18?"Добрый день":"Добрый вечер"};
+const shuffled=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+const playLikes=()=>{if(!ST.likes.length){toast("Сначала отметь пару треков сердечком");return}play(shuffled(ST.likes),0)};
 const SH=[["Сейчас в тренде",""],["Электроника","Electronic"],["Лоу-фай","Lo-Fi"],["Хип-хоп","Hip-Hop/Rap"]];
 function home(){
-  main.innerHTML='<div class="page"><div class="st"><h1 class="big">'+hello()+',<br><em>что послушаем?</em></h1><p class="sub">Открытая музыка: слушай целиком, бесплатно, без рекламы.</p>'+sbH()+'<div id="feat"><div class="sk" style="height:230px"></div></div><div id="shl"></div></div></div>';
-  bindQ();stag();
+  main.innerHTML='<div class="pg px"><button class="likes" id="lkB"><div class="hh">'+HEART+'</div><b>Любимое</b><span class="circ" role="button" aria-label="Играть вперемешку">'+SHUF+'</span></button><div class="tiles" id="tl">'+'<div class="sk" style="height:78px"></div>'.repeat(4)+'</div><div id="shl"><div class="sk" style="height:240px;margin-top:34px"></div></div></div>';
   const jobs=SH.map(s=>audTrend(s[1])).concat([jamTrend(),ytTrend()]);
-  settle(jobs).then(rs=>{if(view!=="home")return;let n=0,html="";const all=[];
+  settle(jobs).then(rs=>{if(view!=="home")return;
     const yi=rs.length-1,ok=rs.filter(r=>r.ok&&r.v.length);if(rs[yi].ok&&rs[yi].v.length){ok.splice(ok.indexOf(rs[yi]),1);ok.unshift(rs[yi])}
-    ok.forEach((r,idx)=>{const ri=rs.indexOf(r),title=ri<SH.length?SH[ri][0]:ri===SH.length?"Из Jamendo":"Популярно на YouTube";const k="h"+rs.indexOf(r);lists[k]=r.v;
-      html+='<h2>'+title+'</h2><div class="shelf">'+r.v.map((t,i)=>cardH(t,k,i)).join("")+'</div>'});
-    const first=ok.length?ok[0].v:[];lists.feat=first;
-    $("feat").innerHTML=first.length?'<div class="feat glass"><div class="cv" style="'+artCss(first[0])+'"></div><div><span class="tag">Для начала</span><h3>'+esc(first[0].title)+'</h3><p>'+esc(first[0].artist)+'</p><button class="btn" data-k="feat" data-i="0"><svg class="i f" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>Слушать</button></div></div>':"";
-    const w=warn(rs);const bad=rs.some(r=>!r.ok&&!(r.e&&r.e.message==="nokey"));
-    $("shl").innerHTML=(first.length?"":'<p class="msg glass">Ничего не нашлось. Проверь интернет или зайди позже.</p>')+(w&&(!ST.yk||!ST.jk)?'<p class="msg glass" style="margin-top:12px">'+warn(rs)+'</p>':"")+html;mark()});
+    let html="";
+    ok.forEach((r,idx)=>{const ri=rs.indexOf(r),title=ri<SH.length?SH[ri][0]:ri===SH.length?"Из Jamendo":"Популярно на YouTube",k="h"+ri;lists[k]=r.v;
+      html+='<h2>'+title+'<button data-all="'+k+'">Играть всё</button></h2><div class="shelf">'+r.v.map((t,i)=>sqH(t,k,i)).join("")+'</div>';
+      if(idx===0&&ok.length>1){const src=ok[ok.length-1].v.slice().reverse().slice(0,12);lists.nt=src;html+='<h2>Новые треки</h2><div class="shelf">'+src.map((t,i)=>ntH(t,"nt",i)).join("")+'</div>'}});
+    const first=ok.length?ok[0].v:[];
+    const pool=ST.recent.slice(0,4);first.forEach(t=>{if(pool.length<4&&!pool.some(x=>x.id===t.id))pool.push(t)});lists.tl=pool;
+    $("tl").innerHTML=pool.map((t,i)=>tileH(t,"tl",i)).join("");
+    const w=warn(rs);
+    $("shl").innerHTML=(first.length?"":'<p class="msg" style="margin-top:20px">Ничего не нашлось. Проверь интернет или зайди позже.</p>')+(w&&(!ST.yk||!ST.jk)?'<p class="msg" style="margin-top:20px">'+w+'</p>':"")+html;mark()});
 }
-function doSearch(q){const g=$("sres");g.innerHTML='<div class="sk" style="height:62px;margin-bottom:8px"></div>'.repeat(5);
+function doSearch(q){const g=$("sres");g.innerHTML='<div class="sk" style="height:56px;margin-bottom:10px"></div>'.repeat(6);
   settle([ytSearch(q),audSearch(q),jamSearch(q)]).then(rs=>{const l=merge(rs);lists.search=l;const w=warn(rs);
-    g.innerHTML='<div class="st">'+(w?'<p class="msg glass" style="margin-bottom:10px">'+w+'</p>':"")+(l.length?l.map((t,i)=>rowH(t,"search",i)).join(""):'<p class="msg glass">По запросу «'+esc(q)+'» ничего нет. Попробуй другое слово.</p>')+'</div>';stag();mark()})}
-function search(){main.innerHTML='<div class="page"><h1 class="big">Найти<br><em>музыку</em></h1>'+sbH()+'<div id="sres" style="margin-top:14px"><p class="msg glass">Напиши название песни или исполнителя и нажми Enter.</p></div></div>';bindQ();$("q").focus({preventScroll:true})}
-function lib(){lists.lib=ST.likes;main.innerHTML='<div class="page"><h1 class="big">Твоё<br><em>любимое</em></h1>'+(ST.likes.length?'<div class="st"><button class="btn" id="plAll" style="margin:6px 0 16px"><svg class="i f" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>Играть всё</button>'+ST.likes.map((t,i)=>rowH(t,"lib",i)).join("")+'</div>':'<p class="msg glass" style="margin-top:14px">Здесь пока пусто. Нажми сердечко у трека, и он появится тут.</p>')+'</div>';stag();if($("plAll"))$("plAll").onclick=()=>play(ST.likes,0);mark()}
-function scn(){const items=[["auto","Авто","Фон сам меняется под трек"]].concat(SCN.map(k=>[k,BG.scenes[k].name,BG.scenes[k].desc]));
-  main.innerHTML='<div class="page"><h1 class="big">Живые<br><em>фоны</em></h1><p class="sub">Фон оживает, когда играет музыка. Выбери свой или оставь «Авто».</p><div class="scn st">'+items.map(i=>'<button class="sc'+(ST.scene===i[0]?' on':'')+'" data-s="'+i[0]+'"><canvas></canvas><span>'+i[1]+'<small>'+i[2]+'</small></span></button>').join("")+'</div></div>';stag();
-  main.querySelectorAll(".sc").forEach(b=>{const n=b.dataset.s,c=b.querySelector("canvas");BG.thumb(c,n==="auto"?SCN[0]:n)});}
+    g.innerHTML=(w?'<p class="msg" style="margin-bottom:10px">'+w+'</p>':"")+(l.length?l.map((t,i)=>rowH(t,"search",i)).join(""):'<p class="msg">По запросу «'+esc(q)+'» ничего нет. Попробуй другое слово.</p>');mark()})}
+const GEN=[["Электроника","Electronic",24],["Хип-хоп","Hip-Hop",350],["Лоу-фай","lofi",160],["Рок","rock",8],["Поп","pop",320],["Джаз","jazz",40],["Классика","classical",215],["Инди","indie",280]];
+function search(){main.innerHTML='<div class="pg px"><h1>Поиск</h1><label class="sb"><svg class="i" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg><input id="q" type="search" placeholder="Песня, исполнитель, жанр" enterkeyhint="search"></label><div id="sres"><h2 style="margin-top:22px">Жанры</h2><div class="gen">'+GEN.map(g=>'<button class="g" data-g="'+g[1]+'" style="background:hsl('+g[2]+' 62% 38%)">'+g[0]+'</button>').join("")+'</div></div></div>';
+  const q=$("q");q.addEventListener("keydown",e=>{if(e.key==="Enter"&&q.value.trim()){q.blur();doSearch(q.value.trim())}})}
+let libTab="likes";
+function lib(){const arr=libTab==="likes"?ST.likes:ST.recent;lists.lib=arr;
+  main.innerHTML='<div class="pg px"><h1>Библиотека</h1><div class="chips"><button class="chip'+(libTab==="likes"?" on":"")+'" data-c="likes">Любимое</button><button class="chip'+(libTab==="recent"?" on":"")+'" data-c="recent">Недавние</button></div>'+
+   (arr.length?'<button class="btn" id="plAll" style="margin:4px 0 12px">'+PLAY+'Играть всё</button>'+arr.map((t,i)=>rowH(t,"lib",i)).join(""):'<p class="msg">'+(libTab==="likes"?"Здесь пока пусто. Нажми сердечко у трека, и он появится тут.":"Ты пока ничего не слушал.")+'</p>')+'</div>';
+  if($("plAll"))$("plAll").onclick=()=>play(arr,0);mark()}
 const tabsEl=$("tabs"),ind=$("ind");
 function moveInd(){const b=tabsEl.querySelector(".tb.on");if(!b)return;ind.style.width=b.offsetWidth+"px";ind.style.setProperty("--tx",b.offsetLeft+"px")}
-function show(v){view=v;tabsEl.querySelectorAll(".tb").forEach(b=>b.classList.toggle("on",b.dataset.v===v));moveInd();({home,search,lib,scn})[v]();main.scrollTop=0}
+function show(v){view=v;tabsEl.querySelectorAll(".tb").forEach(b=>b.classList.toggle("on",b.dataset.v===v));moveInd();({home,search,lib})[v]();main.scrollTop=0}
 tabsEl.querySelectorAll(".tb").forEach(b=>b.onclick=()=>{if(dragged){dragged=false;return}show(b.dataset.v)});
 /* на телефоне «линзу» можно тянуть пальцем */
 let dragged=false,pd=null;
@@ -135,15 +145,20 @@ function endPress(e){if(!pd)return;const m=pd.moved;pd=null;tabsEl.classList.rem
   if(m){dragged=true;setTimeout(()=>dragged=false,60);const cx=parseFloat(ind.style.getPropertyValue("--tx"))+ind.offsetWidth/2;let best=null,bd=1e9;tabsEl.querySelectorAll(".tb").forEach(b=>{const d=Math.abs(b.offsetLeft+b.offsetWidth/2-cx);if(d<bd){bd=d;best=b}});if(best)show(best.dataset.v)}}
 tabsEl.addEventListener("pointerup",endPress);tabsEl.addEventListener("pointercancel",endPress);addEventListener("resize",moveInd);
 main.addEventListener("click",e=>{
-  const lk=e.target.closest(".like");if(lk){const t=lists[lk.dataset.k][+lk.dataset.i];like(t,lk);const on=isLiked(t);lk.classList.toggle("on",on);const s=lk.querySelector("svg");if(s)s.style.fill=on?"currentColor":"none";return}
-  const sc=e.target.closest(".sc");if(sc){ST.scene=sc.dataset.s;save();main.querySelectorAll(".sc").forEach(x=>x.classList.toggle("on",x===sc));if(ST.scene==="auto")paintBg();else BG.set(ST.scene);toast("Фон: "+(ST.scene==="auto"?"Авто":BG.scenes[ST.scene].name));return}
+  const lk=e.target.closest(".like");if(lk){const t=lists[lk.dataset.k][+lk.dataset.i];like(t,lk);const on=isLiked(t);lk.classList.toggle("on",on);const sv=lk.querySelector("svg");if(sv)sv.style.fill=on?"currentColor":"none";return}
+  if(e.target.closest(".circ")){playLikes();return}
+  if(e.target.closest("#lkB")){libTab="likes";show("lib");return}
+  const al=e.target.closest("[data-all]");if(al){const l=lists[al.dataset.all];if(l&&l.length)play(l,0);return}
+  const ch=e.target.closest(".chip");if(ch){libTab=ch.dataset.c;lib();return}
+  const g=e.target.closest(".g");if(g){$("q").value=g.textContent;doSearch(g.dataset.g);return}
   const b=e.target.closest("[data-k]");if(b)play(lists[b.dataset.k],+b.dataset.i)});
 /* волна при нажатии */
-document.addEventListener("pointerdown",e=>{const b=e.target.closest("button");if(!b||b.classList.contains("sc"))return;const r=b.getBoundingClientRect(),d=Math.max(r.width,r.height),s=document.createElement("span");s.className="rpl";s.style.cssText="width:"+d+"px;height:"+d+"px;left:"+(e.clientX-r.left-d/2)+"px;top:"+(e.clientY-r.top-d/2)+"px";b.appendChild(s);setTimeout(()=>s.remove(),650)});
+document.addEventListener("pointerdown",e=>{const b=e.target.closest("button");if(!b)return;const r=b.getBoundingClientRect(),d=Math.max(r.width,r.height),s=document.createElement("span");s.className="rpl";s.style.cssText="width:"+d+"px;height:"+d+"px;left:"+(e.clientX-r.left-d/2)+"px;top:"+(e.clientY-r.top-d/2)+"px";b.appendChild(s);setTimeout(()=>s.remove(),650)});
 /* настройки */
-$("setB").onclick=()=>{$("yk").value=ST.yk;$("jk").value=ST.jk;$("ak").value=ST.ak;$("set").classList.add("on")};
+$("sc").innerHTML='<option value="auto">Авто (меняется под трек)</option>'+SCN.map(k=>'<option value="'+k+'">'+BG.scenes[k].name+" — "+BG.scenes[k].desc+"</option>").join("");
+$("setB").onclick=()=>{$("sc").value=ST.scene;$("yk").value=ST.yk;$("jk").value=ST.jk;$("ak").value=ST.ak;$("set").classList.add("on")};
 $("setNo").onclick=()=>$("set").classList.remove("on");
-$("setOk").onclick=()=>{ST.yk=$("yk").value.trim();ST.jk=$("jk").value.trim();ST.ak=$("ak").value.trim();save();$("set").classList.remove("on");toast("Сохранено");show(view)};
+$("setOk").onclick=()=>{ST.yk=$("yk").value.trim();ST.jk=$("jk").value.trim();ST.ak=$("ak").value.trim();ST.scene=$("sc").value;save();paintBg();$("set").classList.remove("on");toast("Сохранено");show(view)};
 $("set").addEventListener("click",e=>{if(e.target===$("set"))$("set").classList.remove("on")});
 BG.init();if(ST.scene!=="auto"&&BG.scenes[ST.scene])BG.set(ST.scene);
 show("home");setTimeout(moveInd,300);if(document.fonts&&document.fonts.ready)document.fonts.ready.then(moveInd);
