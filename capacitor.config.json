@@ -1,5 +1,14 @@
 {
   "appId": "com.felykxzy.notely",
   "appName": "Notely",
-  "webDir": "www"
+  "webDir": "www",
+  "server": {
+    "url": "https://felykxzy.github.io/notely/",
+    "cleartext": false
+  },
+  "ios": {
+    "backgroundColor": "#111111",
+    "contentInset": "never",
+    "allowsLinkPreview": false
+  }
 }
