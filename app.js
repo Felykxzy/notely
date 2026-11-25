@@ -55,7 +55,7 @@ let YT_=null;
 function ysc(e){if(!ymode)return;const S=window.YT.PlayerState;if(e.data===S.PLAYING){setIcons(true);fails=0;const d=yp.getDuration();if(d&&cur)cur.dur=d}else if(e.data===S.PAUSED)setIcons(false);else if(e.data===S.ENDED){if(rep){yp.seekTo(0);yp.playVideo()}else next()}}
 function ytick(){if(!ymode||!yp||!yp.getCurrentTime)return;const c=yp.getCurrentTime()||0,d=yp.getDuration()||(cur&&cur.dur)||0,p=d?c/d*1000:0;[$("seek"),$("fSeek")].forEach(s=>{if(!s.dataset.d){s.value=p;rng(s,p/10)}});mprog(p/10);$("cur").textContent=$("fCur").textContent=fmt(c);$("dur").textContent=$("fDur").textContent=fmt(d)}
 setInterval(ytick,500);
-function showYt(on){const w=$("ytw");w.hidden=!on;if(!on)w.classList.remove("big");else w.classList.toggle("big",$("full").classList.contains("on"));$("fCv").style.visibility=on?"hidden":""}
+function showYt(on){const w=$("ytw");w.hidden=!on;if(!on)w.classList.remove("big");else w.classList.toggle("big",$("full").classList.contains("on"));}
 function resolve(t){if(t.src==="YouTube")return Promise.resolve("");if(t.src!=="Audius")return Promise.resolve(t.url);
   return getJ(AUD+"/tracks/"+t.id.slice(1)+"/stream?no_redirect=true&"+aq()).then(j=>typeof j.data==="string"?j.data:t.url).catch(()=>t.url)}
 function load(go){cur=Q[qi];if(!cur)return;const my=++tok;
