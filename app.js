@@ -25,7 +25,9 @@ const jamTrend=()=>jamQ("order=popularity_week");
 const YT="https://www.googleapis.com/youtube/v3";
 const dur8601=d=>{const m=/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/.exec(d||"");return m?(+m[1]||0)*3600+(+m[2]||0)*60+(+m[3]||0):0};
 const decode=s=>{const t=document.createElement("textarea");t.innerHTML=s;return t.value};
-const fromYt=x=>{const sn=x.snippet||{},th=sn.thumbnails||{};return{id:"y"+(x.id.videoId||x.id),ytId:x.id.videoId||x.id,src:"YouTube",title:decode(sn.title||""),artist:decode((sn.channelTitle||"").replace(/ - Topic$/,"")),art:(th.high||th.medium||th.default||{}).url||"",url:"",dur:x.contentDetails?dur8601(x.contentDetails.duration):0}};
+/* убираем хвосты из названий YouTube: (Official Video), [Lyrics], 4K и т.п. */
+const cleanT=t=>{let r=String(t).replace(/\s*[\(\[](official|lyrics?|audio|video|hd|4k|mv|music video|visualizer|clip|live|remaster(ed)?|explicit|with lyrics)[^\)\]]*[\)\]]/gi,"").replace(/\s*\|.*$/,"").replace(/\s+/g," ").trim();return r||t};
+const fromYt=x=>{const sn=x.snippet||{},th=sn.thumbnails||{};return{id:"y"+(x.id.videoId||x.id),ytId:x.id.videoId||x.id,src:"YouTube",title:cleanT(decode(sn.title||"")),artist:decode((sn.channelTitle||"").replace(/ - Topic$/,"")),art:(th.high||th.medium||th.default||{}).url||"",url:"",dur:x.contentDetails?dur8601(x.contentDetails.duration):0}};
 const ytOn=()=>!!(ST.yk||CF.proxy);const ytKey=()=>{if(!ST.yk)return Promise.reject(new Error("nokey"));return Promise.resolve(ST.yk)};
 const ytErr=j=>{if(j&&j.error){const e=new Error(j.error.message||"yt");e.quota=(j.error.errors||[]).some(x=>/quota/i.test(x.reason));throw e}return j};
 const ytSearch=q=>(!ST.yk&&CF.proxy)?getJ(CF.proxy.replace(/\/$/,"")+"/search?q="+encodeURIComponent(q)).then(ytErr).then(v=>(v.items||[]).map(fromYt)):ytKey().then(k=>getJ(YT+"/search?part=snippet&type=video&videoCategoryId=10&maxResults=20&q="+encodeURIComponent(q)+"&key="+k)).then(ytErr).then(j=>{const ids=(j.items||[]).map(i=>i.id.videoId).filter(Boolean);if(!ids.length)return[];return getJ(YT+"/videos?part=snippet,contentDetails&id="+ids.join(",")+"&key="+ST.yk).then(ytErr).then(v=>(v.items||[]).map(fromYt))});
