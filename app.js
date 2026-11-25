@@ -2,7 +2,7 @@
 "use strict";
 const $=i=>document.getElementById(i);
 const AUD="https://api.audius.co/v1",JAM="https://api.jamendo.com/v3.0",APP="notely";
-const CF=window.NOTELY||{};const ST={jk:"",ak:"",yk:"",likes:[],recent:[],vol:80,scene:"auto"};
+const CF=window.NOTELY||{};const ST={jk:"",ak:"",yk:"",likes:[],recent:[],hist:[],vol:80,scene:"auto"};
 try{Object.assign(ST,JSON.parse(localStorage.getItem("notely2")||"{}"))}catch(e){}
 const save=()=>{try{localStorage.setItem("notely2",JSON.stringify(ST))}catch(e){}};
 const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
@@ -141,12 +141,28 @@ function home(){
     const w=warn(rs);
     $("shl").innerHTML=(first.length?"":'<p class="msg" style="margin-top:20px">Ничего не нашлось. Проверь интернет или зайди позже.</p>')+(w&&(!ytOn()||!jk())?'<p class="msg" style="margin-top:20px">'+w+'</p>':"")+html;mark()});
 }
-function doSearch(q){const g=$("sres");g.innerHTML='<div class="sk" style="height:56px;margin-bottom:10px"></div>'.repeat(6);
+/* ---- подсказки в поиске ---- */
+const addHist=q=>{q=String(q).trim();if(!q)return;ST.hist=[q].concat((ST.hist||[]).filter(x=>x.toLowerCase()!==q.toLowerCase())).slice(0,8);save()};
+let jc=0,sgT=0,sgTok=0;
+const jsonp=url=>new Promise((res,rej)=>{const n="__sg"+(++jc),sc=document.createElement("script"),fin=()=>{delete window[n];sc.remove()};window[n]=d=>{fin();res(d)};sc.onerror=()=>{fin();rej()};sc.src=url+"&jsonp="+n;document.head.appendChild(sc);setTimeout(()=>{if(window[n]){fin();rej()}},3500)});
+const ytSug=q=>jsonp("https://suggestqueries.google.com/complete/search?client=youtube&ds=yt&hl=ru&q="+encodeURIComponent(q)).then(d=>(d&&d[1]||[]).map(x=>Array.isArray(x)?x[0]:x).filter(x=>typeof x==="string"&&x).slice(0,6));
+const SG_I={h:'<svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',l:'<svg class="i" viewBox="0 0 24 24"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></svg>',s:'<svg class="i" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>'};
+const sgRow=(x,t)=>'<div class="sgr"><button class="sgi" data-s="'+esc(x)+'">'+SG_I[t]+'<span>'+esc(x)+'</span></button><button class="sgf" data-f="'+esc(x)+'" aria-label="Вставить в поиск"><svg class="i" viewBox="0 0 24 24"><path d="M17 17L7 7M7 15V7h8"/></svg></button></div>';
+function paintSg(list,head){const g=$("sg");if(!g)return;g.innerHTML=(head||"")+list.map(a=>sgRow(a[0],a[1])).join("");$("sres").style.display=(list.length||head)?"none":""}
+function updSg(){const q=$("q").value.trim(),my=++sgTok;clearTimeout(sgT);
+  if(!q){const h=ST.hist||[];paintSg(h.map(x=>[x,"h"]),h.length?'<div class="sgh"><span>Недавние поиски</span><button id="sgClr">Очистить</button></div>':"");return}
+  const lo=q.toLowerCase(),has=(a,x)=>a.some(y=>y[0].toLowerCase()===x.toLowerCase()),loc=[];
+  (ST.hist||[]).forEach(x=>{if(x.toLowerCase().includes(lo)&&x.toLowerCase()!==lo)loc.push([x,"h"])});
+  ST.likes.concat(ST.recent).forEach(t=>{[t.artist,t.title].forEach(x=>{if(x&&x.length<60&&x.toLowerCase().includes(lo)&&x.toLowerCase()!==lo&&!has(loc,x))loc.push([x,"l"])})});
+  const l4=loc.slice(0,4);paintSg(l4);
+  sgT=setTimeout(()=>ytSug(q).then(r=>{if(my!==sgTok)return;const all=l4.slice();r.forEach(x=>{if(x.toLowerCase()!==lo&&!has(all,x))all.push([x,"s"])});paintSg(all.slice(0,8))}).catch(()=>{}),180)}
+function doSearch(q){addHist(q);const sgE=$("sg");if(sgE)sgE.innerHTML="";const g=$("sres");g.style.display="";g.innerHTML='<div class="sk" style="height:56px;margin-bottom:10px"></div>'.repeat(6);
   settle([ytSearch(q),audSearch(q),jamSearch(q)]).then(rs=>{const l=merge(rs);lists.search=l;const w=warn(rs);
     g.innerHTML=(w?'<p class="msg" style="margin-bottom:10px">'+w+'</p>':"")+(l.length?l.map((t,i)=>rowH(t,"search",i)).join(""):'<p class="msg">По запросу «'+esc(q)+'» ничего нет. Попробуй другое слово.</p>');mark()})}
 const GEN=[["Электроника","Electronic",24],["Хип-хоп","Hip-Hop",350],["Лоу-фай","lofi",160],["Рок","rock",8],["Поп","pop",320],["Джаз","jazz",40],["Классика","classical",215],["Инди","indie",280]];
-function search(){main.innerHTML='<div class="pg px"><h1>Поиск</h1><label class="sb"><svg class="i" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg><input id="q" type="search" placeholder="Песня, исполнитель, жанр" enterkeyhint="search"></label><div id="sres"><h2 style="margin-top:22px">Жанры</h2><div class="gen">'+GEN.map(g=>'<button class="g" data-g="'+g[1]+'" style="background:hsl('+g[2]+' 62% 38%)">'+g[0]+'</button>').join("")+'</div></div></div>';
-  const q=$("q");q.addEventListener("keydown",e=>{if(e.key==="Enter"&&q.value.trim()){q.blur();doSearch(q.value.trim())}})}
+function search(){main.innerHTML='<div class="pg px"><h1>Поиск</h1><label class="sb"><svg class="i" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg><input id="q" type="search" placeholder="Песня, исполнитель, жанр" enterkeyhint="search" autocomplete="off" autocorrect="off" spellcheck="false"></label><div id="sg"></div><div id="sres"><h2 style="margin-top:22px">Жанры</h2><div class="gen">'+GEN.map(g=>'<button class="g" data-g="'+g[1]+'" style="background:hsl('+g[2]+' 62% 38%)">'+g[0]+'</button>').join("")+'</div></div></div>';
+  const q=$("q");q.addEventListener("keydown",e=>{if(e.key==="Enter"&&q.value.trim()){q.blur();doSearch(q.value.trim())}});
+  q.addEventListener("input",updSg);q.addEventListener("focus",()=>{if(!q.value.trim())updSg()})}
 let libTab="likes";
 function lib(){const arr=libTab==="likes"?ST.likes:ST.recent;lists.lib=arr;
   main.innerHTML='<div class="pg px"><h1>Библиотека</h1><div class="chips"><button class="chip'+(libTab==="likes"?" on":"")+'" data-c="likes">Любимое</button><button class="chip'+(libTab==="recent"?" on":"")+'" data-c="recent">Недавние</button></div>'+
@@ -170,6 +186,9 @@ main.addEventListener("click",e=>{
   if(e.target.closest("#lkB")){libTab="likes";show("lib");return}
   const al=e.target.closest("[data-all]");if(al){const l=lists[al.dataset.all];if(l&&l.length)play(l,0);return}
   const ch=e.target.closest(".chip");if(ch){libTab=ch.dataset.c;lib();return}
+  const sg=e.target.closest(".sgi");if(sg){const v=sg.dataset.s;$("q").value=v;$("q").blur();doSearch(v);return}
+  const sf=e.target.closest(".sgf");if(sf){$("q").value=sf.dataset.f;$("q").focus();updSg();return}
+  if(e.target.closest("#sgClr")){ST.hist=[];save();updSg();return}
   const g=e.target.closest(".g");if(g){$("q").value=g.textContent;doSearch(g.dataset.g);return}
   const b=e.target.closest("[data-k]");if(b)play(lists[b.dataset.k],+b.dataset.i)});
 /* после клавиатуры страница возвращается на место, без сдвига и приближения */
