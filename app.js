@@ -27,7 +27,7 @@ const dur8601=d=>{const m=/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/.exec(d||"");retu
 const decode=s=>{const t=document.createElement("textarea");t.innerHTML=s;return t.value};
 /* убираем хвосты из названий YouTube: (Official Video), [Lyrics], 4K и т.п. */
 const cleanT=t=>{let r=String(t).replace(/\s*[\(\[](official|lyrics?|audio|video|hd|4k|mv|music video|visualizer|clip|live|remaster(ed)?|explicit|with lyrics)[^\)\]]*[\)\]]/gi,"").replace(/\s*\|.*$/,"").replace(/\s+/g," ").trim();return r||t};
-const fromYt=x=>{const sn=x.snippet||{},th=sn.thumbnails||{};return{id:"y"+(x.id.videoId||x.id),ytId:x.id.videoId||x.id,src:"YouTube",title:cleanT(decode(sn.title||"")),artist:decode((sn.channelTitle||"").replace(/ - Topic$/,"")),art:(th.high||th.medium||th.default||{}).url||"",url:"",dur:x.contentDetails?dur8601(x.contentDetails.duration):0}};
+const fromYt=x=>{const sn=x.snippet||{},th=sn.thumbnails||{};return{id:"y"+(x.id.videoId||x.id),ytId:x.id.videoId||x.id,src:"YouTube",vid:/official\s*(music\s*)?video|music\s*video|\bmv\b|video\s*clip/i.test(sn.title||""),title:cleanT(decode(sn.title||"")),artist:decode((sn.channelTitle||"").replace(/ - Topic$/,"")),art:(th.high||th.medium||th.default||{}).url||"",url:"",dur:x.contentDetails?dur8601(x.contentDetails.duration):0}};
 const ytOn=()=>!!(ST.yk||CF.proxy);const ytKey=()=>{if(!ST.yk)return Promise.reject(new Error("nokey"));return Promise.resolve(ST.yk)};
 const ytErr=j=>{if(j&&j.error){const e=new Error(j.error.message||"yt");e.quota=(j.error.errors||[]).some(x=>/quota/i.test(x.reason));throw e}return j};
 const ytSearch=q=>(!ST.yk&&CF.proxy)?getJ(CF.proxy.replace(/\/$/,"")+"/search?q="+encodeURIComponent(q)).then(ytErr).then(v=>(v.items||[]).map(fromYt)):ytKey().then(k=>getJ(YT+"/search?part=snippet&type=video&videoCategoryId=10&maxResults=20&q="+encodeURIComponent(q)+"&key="+k)).then(ytErr).then(j=>{const ids=(j.items||[]).map(i=>i.id.videoId).filter(Boolean);if(!ids.length)return[];return getJ(YT+"/videos?part=snippet,contentDetails&id="+ids.join(",")+"&key="+ST.yk).then(ytErr).then(v=>(v.items||[]).map(fromYt))});
@@ -57,7 +57,7 @@ let YT_=null;
 function ysc(e){if(!ymode)return;const S=window.YT.PlayerState;if(e.data===S.PLAYING){setIcons(true);fails=0;const d=yp.getDuration();if(d&&cur)cur.dur=d}else if(e.data===S.PAUSED)setIcons(false);else if(e.data===S.ENDED){if(rep){yp.seekTo(0);yp.playVideo()}else next()}}
 function ytick(){if(!ymode||!yp||!yp.getCurrentTime)return;const c=yp.getCurrentTime()||0,d=yp.getDuration()||(cur&&cur.dur)||0,p=d?c/d*1000:0;[$("seek"),$("fSeek")].forEach(s=>{if(!s.dataset.d){s.value=p;rng(s,p/10)}});mprog(p/10);$("cur").textContent=$("fCur").textContent=fmt(c);$("dur").textContent=$("fDur").textContent=fmt(d)}
 setInterval(ytick,500);
-function showYt(on){const w=$("ytw");w.hidden=!on;if(!on)w.classList.remove("big");else w.classList.toggle("big",$("full").classList.contains("on"));}
+function showYt(on){const w=$("ytw"),v=!!(on&&cur&&cur.vid);w.hidden=!on;w.classList.toggle("vid",v);if(!on)w.classList.remove("big");else w.classList.toggle("big",v&&$("full").classList.contains("on"));$("fCv").style.visibility=v?"hidden":""}
 function resolve(t){if(t.src==="YouTube")return Promise.resolve("");if(t.src!=="Audius")return Promise.resolve(t.url);
   return getJ(AUD+"/tracks/"+t.id.slice(1)+"/stream?no_redirect=true&"+aq()).then(j=>typeof j.data==="string"?j.data:t.url).catch(()=>t.url)}
 function load(go){cur=Q[qi];if(!cur)return;const my=++tok;
