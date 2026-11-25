@@ -172,6 +172,11 @@ main.addEventListener("click",e=>{
   const ch=e.target.closest(".chip");if(ch){libTab=ch.dataset.c;lib();return}
   const g=e.target.closest(".g");if(g){$("q").value=g.textContent;doSearch(g.dataset.g);return}
   const b=e.target.closest("[data-k]");if(b)play(lists[b.dataset.k],+b.dataset.i)});
+/* после клавиатуры страница возвращается на место, без сдвига и приближения */
+const resetView=()=>{try{window.scrollTo(0,0);document.documentElement.scrollLeft=0;document.body.scrollLeft=0;$("app").scrollLeft=0}catch(e){}};
+document.addEventListener("focusout",()=>{setTimeout(resetView,60);setTimeout(resetView,350)});
+document.addEventListener("focusin",()=>setTimeout(resetView,60));
+if(window.visualViewport)visualViewport.addEventListener("resize",()=>{if(Math.abs(visualViewport.scale-1)>.01)resetView()});
 /* без приближения щипком и двойным касанием */
 ["gesturestart","gesturechange","gestureend"].forEach(n=>document.addEventListener(n,e=>e.preventDefault()));
 /* ---- свайпы ---- */
