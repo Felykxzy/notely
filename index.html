@@ -110,7 +110,7 @@ input[type=range]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;bac
 #full{position:fixed;inset:0;z-index:40;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:calc(20px + var(--sat)) 28px calc(24px + var(--sab));background:#0b0b0bd9;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);clip-path:circle(0 at 50% 100%);visibility:hidden;transition:clip-path .7s cubic-bezier(.7,0,.2,1),visibility 0s .7s}
 #full.on{clip-path:circle(150% at 50% 100%);visibility:visible;transition:clip-path .8s cubic-bezier(.7,0,.2,1)}
 #full .cl{position:absolute;top:calc(14px + var(--sat));right:18px}
-#full .cv{position:relative;z-index:0;width:min(86vw,54vh,460px);aspect-ratio:1;border-radius:14px;opacity:0;transition:opacity .8s ease .2s}
+#full .cv{position:relative;z-index:auto;width:min(86vw,54vh,460px);aspect-ratio:1;border-radius:14px;opacity:0;transition:opacity .8s ease .2s}
 #full.on .cv{opacity:1}
 #full .cv::before{content:"";position:absolute;inset:-7%;z-index:-1;border-radius:24px;background:inherit;background-size:cover;background-position:center;filter:blur(38px) saturate(1.7) brightness(1.1);opacity:.9}
 #full .cv::after{content:"";position:absolute;inset:-26%;z-index:-2;border-radius:50%;background:inherit;background-size:cover;background-position:center;filter:blur(90px) saturate(1.8);opacity:.45}
