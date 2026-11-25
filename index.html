@@ -147,6 +147,18 @@ input[type=range]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;bac
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 /* Звук YouTube играет, а видео скрыто: на экране только обложка */
 #ytw:not(.vid),#ytw.mini:not(.vid),#ytw.big:not(.vid){position:fixed!important;left:0!important;top:0!important;right:auto!important;bottom:auto!important;transform:none!important;width:2px!important;height:2px!important;aspect-ratio:auto!important;opacity:0!important;pointer-events:none!important;border-radius:0!important;box-shadow:none!important;overflow:hidden!important;z-index:-1!important}
+/* настройки */
+#set>div{gap:6px;max-width:400px}
+#set .sh{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
+#set section{display:flex;flex-direction:column;gap:8px;padding:12px 0;border-top:1px solid var(--line)}
+#set h3{margin:0;font-size:13px;font-weight:800;color:#fff;letter-spacing:0}
+#set h3 small{display:block;font-weight:600;color:var(--mute);font-size:12px;margin-top:2px}
+#set label{display:flex;flex-direction:column;gap:6px;color:var(--mute);font-size:12px;font-weight:700}
+#set input,#set select{background:#2a2a2a;border:1px solid var(--line);border-radius:10px;padding:10px 12px;color:#fff;font-size:14px}
+#set .hint{margin:0;color:var(--mute);font-size:12px;line-height:1.5;font-weight:600}
+#set .wide{width:100%;justify-content:center}
+#set .sf{display:flex;gap:8px;justify-content:flex-end;padding-top:12px;border-top:1px solid var(--line)}
+#set .btn{padding:10px 18px;font-size:14px}
 </style>
 </head>
 <body>
@@ -191,13 +203,23 @@ input[type=range]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;bac
   </div>
 </section>
 <div id="ytw" class="mini" hidden><div id="ytp"></div></div>
-<div id="set"><div role="dialog" aria-label="Настройки">
-  <h2>Настройки</h2>
-  <label>Свой ключ YouTube (необязательно), бесплатный: <a href="https://console.cloud.google.com/apis/library/youtube.googleapis.com" target="_blank" rel="noopener">как получить</a><input id="yk" placeholder="начинается с AIza…" autocomplete="off"></label>
-  <label>Свой ключ Jamendo (необязательно), бесплатный: <a href="https://devportal.jamendo.com" target="_blank" rel="noopener">devportal.jamendo.com</a><input id="jk" placeholder="например 1a2b3c4d" autocomplete="off"></label>
-  <label>Ключ Audius (api_key), только если попросит<input id="ak" placeholder="пусто — не нужен" autocomplete="off"></label>
-  <label>Живой фон в полном плеере<select id="sc"></select></label>
-  <div style="display:flex;gap:8px;justify-content:flex-end"><button class="btn g2" id="setNo">Закрыть</button><button class="btn" id="setOk">Сохранить</button></div>
+<div id="set"><div role="dialog" aria-modal="true" aria-label="Настройки">
+  <div class="sh"><h2>Настройки</h2><button class="ib" id="setX" aria-label="Закрыть">✕</button></div>
+  <section>
+    <h3>Фон в полном плеере</h3>
+    <select id="sc"></select>
+  </section>
+  <section>
+    <h3>Свои ключи <small>необязательно, сайт работает и без них</small></h3>
+    <label>YouTube<input id="yk" placeholder="начинается с AIza…" autocomplete="off"><a href="https://console.cloud.google.com/apis/library/youtube.googleapis.com" target="_blank" rel="noopener">как получить ключ</a></label>
+    <label>Jamendo<input id="jk" placeholder="например 1a2b3c4d" autocomplete="off"><a href="https://devportal.jamendo.com" target="_blank" rel="noopener">как получить ключ</a></label>
+  </section>
+  <section>
+    <h3>Сайт</h3>
+    <p class="hint">Версия <b id="ver"></b>. Если что-то работает странно, обнови сайт: он заново загрузит все файлы. Настройки и любимые треки сохранятся.</p>
+    <button class="btn g2 wide" id="updB">Обновить сайт</button>
+  </section>
+  <div class="sf"><button class="btn g2" id="setNo">Отмена</button><button class="btn" id="setOk">Сохранить</button></div>
 </div></div>
 <div id="toast" role="status"></div>
 <script src="config.js"></script>

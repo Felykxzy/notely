@@ -159,9 +159,13 @@ main.addEventListener("click",e=>{
 document.addEventListener("pointerdown",e=>{const b=e.target.closest("button");if(!b)return;const r=b.getBoundingClientRect(),d=Math.max(r.width,r.height),s=document.createElement("span");s.className="rpl";s.style.cssText="width:"+d+"px;height:"+d+"px;left:"+(e.clientX-r.left-d/2)+"px;top:"+(e.clientY-r.top-d/2)+"px";b.appendChild(s);setTimeout(()=>s.remove(),650)});
 /* настройки */
 $("sc").innerHTML='<option value="auto">Авто (меняется под трек)</option>'+SCN.map(k=>'<option value="'+k+'">'+BG.scenes[k].name+" — "+BG.scenes[k].desc+"</option>").join("");
-$("setB").onclick=()=>{$("sc").value=ST.scene;$("yk").value=ST.yk;$("jk").value=ST.jk;$("ak").value=ST.ak;$("set").classList.add("on")};
+const APP_VER="2.1";
+$("ver").textContent=APP_VER;
+$("setX").onclick=$("setNo").onclick=()=>$("set").classList.remove("on");
+$("updB").onclick=async()=>{const b=$("updB");b.disabled=true;b.textContent="Обновляю…";try{if("serviceWorker" in navigator){const rs=await navigator.serviceWorker.getRegistrations();await Promise.all(rs.map(r=>r.unregister()))}if("caches" in window){const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)))}}catch(e){}location.replace(location.pathname+"?v="+Date.now())};
+$("setB").onclick=()=>{$("sc").value=ST.scene;$("yk").value=ST.yk;$("jk").value=ST.jk;$("set").classList.add("on")};
 $("setNo").onclick=()=>$("set").classList.remove("on");
-$("setOk").onclick=()=>{ST.yk=$("yk").value.trim();ST.jk=$("jk").value.trim();ST.ak=$("ak").value.trim();ST.scene=$("sc").value;save();paintBg();$("set").classList.remove("on");toast("Сохранено");show(view)};
+$("setOk").onclick=()=>{ST.yk=$("yk").value.trim();ST.jk=$("jk").value.trim();ST.scene=$("sc").value;save();paintBg();$("set").classList.remove("on");toast("Сохранено");show(view)};
 $("set").addEventListener("click",e=>{if(e.target===$("set"))$("set").classList.remove("on")});
 BG.init();if(ST.scene!=="auto"&&BG.scenes[ST.scene])BG.set(ST.scene);
 show("home");setTimeout(moveInd,300);if(document.fonts&&document.fonts.ready)document.fonts.ready.then(moveInd);
