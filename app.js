@@ -172,6 +172,8 @@ main.addEventListener("click",e=>{
   const ch=e.target.closest(".chip");if(ch){libTab=ch.dataset.c;lib();return}
   const g=e.target.closest(".g");if(g){$("q").value=g.textContent;doSearch(g.dataset.g);return}
   const b=e.target.closest("[data-k]");if(b)play(lists[b.dataset.k],+b.dataset.i)});
+/* без приближения щипком и двойным касанием */
+["gesturestart","gesturechange","gestureend"].forEach(n=>document.addEventListener(n,e=>e.preventDefault()));
 /* ---- свайпы ---- */
 const buzz=()=>{try{navigator.vibrate&&navigator.vibrate(10)}catch(e){}};
 function swipe(el,o){let sx=0,sy=0,id=null,dx=0,dy=0,ax=null;
