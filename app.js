@@ -2,7 +2,7 @@
 "use strict";
 const $=i=>document.getElementById(i);
 const AUD="https://api.audius.co/v1",JAM="https://api.jamendo.com/v3.0",APP="notely";
-const CF=window.NOTELY||{};const ST={jk:"",ak:"",yk:"",likes:[],recent:[],hist:[],vol:80,scene:"auto",lite:"auto"};
+const CF=window.NOTELY||{};const ST={jk:"",ak:"",yk:"",likes:[],recent:[],hist:[],pls:[],theme:"cover",vol:80,scene:"auto",lite:"auto"};
 try{Object.assign(ST,JSON.parse(localStorage.getItem("notely2")||"{}"))}catch(e){}
 const save=()=>{try{localStorage.setItem("notely2",JSON.stringify(ST))}catch(e){}};
 const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
@@ -53,6 +53,7 @@ function grabPal(url){return new Promise(res=>{const im=new Image();im.crossOrig
     res(o)}catch(e){res(null)}};
   im.onerror=()=>res(null);im.src=url})}
 function paintBg(){const t=cur;if(!t)return;const my=++palTok;
+  if(ST.theme==='dark'){BG.palette([[44,44,56],[30,30,40],[56,48,64],[36,40,52],[26,26,34]]);return}
   if(palC[t.id]){BG.palette(palC[t.id]);return}
   BG.palette(fbPal(t.id));
   if(!t.art)return;
@@ -79,7 +80,7 @@ function resolve(t){if(t.src==="YouTube")return Promise.resolve("");if(t.src!=="
   return getJ(AUD+"/tracks/"+t.id.slice(1)+"/stream?no_redirect=true&"+aq()).then(j=>typeof j.data==="string"?j.data:t.url).catch(()=>t.url)}
 function load(go){cur=Q[qi];if(!cur)return;const my=++tok;
   $("bar").classList.remove("hid");$("bCv").style.cssText=$("fCv").style.cssText=artCss(cur);mq($("bT"),cur.title);$("bA").textContent=$("fA").textContent=cur.artist;$("fT").textContent=cur.title;
-  ST.recent=[cur].concat(ST.recent.filter(x=>x.id!==cur.id)).slice(0,20);save();document.title=cur.title+" · Notely";$("fLike").classList.toggle("on",isLiked(cur));paintBg();mark();if($("full").classList.contains("on")&&lastQi>=0&&qi!==lastQi)slide(qi>lastQi?"sl":"sr");lastQi=qi;
+  ST.recent=[cur].concat(ST.recent.filter(x=>x.id!==cur.id)).slice(0,20);save();document.title=cur.title+" · Notely";$("fLike").classList.toggle("on",isLiked(cur));paintBg();lyRefresh();mark();if($("full").classList.contains("on")&&lastQi>=0&&qi!==lastQi)slide(qi>lastQi?"sl":"sr");lastQi=qi;
   if("mediaSession" in navigator){try{navigator.mediaSession.metadata=new MediaMetadata({title:cur.title,artist:cur.artist,artwork:cur.art?[{src:cur.art,sizes:"480x480"}]:[]})}catch(e){}}
   if(cur.src==="YouTube"){au.pause();ymode=true;showYt(true);ensureYT().then(p=>{if(my!==tok)return;p.loadVideoById(cur.ytId);try{p.setVolume(ST.vol)}catch(e){}}).catch(()=>failTrack({name:"YouTube не загрузился"}));return}
   if(ymode){ymode=false;try{yp&&yp.pauseVideo()}catch(e){}showYt(false)}
@@ -121,7 +122,7 @@ const sqH=(t,k,i)=>'<button class="sq" data-k="'+k+'" data-i="'+i+'" data-id="'+
 const ntH=(t,k,i)=>'<button class="sq nt" data-k="'+k+'" data-i="'+i+'" data-id="'+esc(t.id)+'"><div class="cv"><i style="'+artCss(t)+'"></i><span>Новый трек</span>'+EQM+'</div><b><em>'+esc(t.title)+'</em>'+esc(t.artist)+'</b></button>';
 const tileH=(t,k,i)=>'<button class="tile" data-k="'+k+'" data-i="'+i+'" data-id="'+esc(t.id)+'"><div class="cv" style="'+artCss(t)+'">'+EQM+'</div><div class="t"><b>'+esc(t.title)+'</b><span>'+esc(t.artist)+'</span></div></button>';
 const heart=(t,k,i)=>'<button class="like'+(isLiked(t)?' on':'')+'" data-lk="'+esc(t.id)+'" data-k="'+k+'" data-i="'+i+'" aria-label="В любимое"><svg class="i" viewBox="0 0 24 24" style="fill:'+(isLiked(t)?'currentColor':'none')+'"><path d="M12 21s-8-5.2-8-11a4.5 4.5 0 0 1 8-2.8A4.5 4.5 0 0 1 20 10c0 5.8-8 11-8 11z"/></svg></button>';
-const rowH=(t,k,i)=>'<div class="row" data-id="'+esc(t.id)+'"><div class="cv" style="'+artCss(t)+'">'+EQM+'</div><button class="t" data-k="'+k+'" data-i="'+i+'"><b>'+esc(t.title)+'</b><span>'+esc(t.artist)+' · '+t.src+'</span></button><time>'+fmt(t.dur)+'</time>'+heart(t,k,i)+'</div>';
+const rowH=(t,k,i)=>'<div class="row" data-id="'+esc(t.id)+'"><div class="cv" style="'+artCss(t)+'">'+EQM+'</div><button class="t" data-k="'+k+'" data-i="'+i+'"><b>'+esc(t.title)+'</b><span>'+esc(t.artist)+' · '+t.src+'</span></button><time>'+fmt(t.dur)+'</time>'+heart(t,k,i)+'<button class="more" data-k="'+k+'" data-i="'+i+'" aria-label="Ещё"><svg class="i" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg></button></div>';
 function mark(){document.querySelectorAll("[data-id]").forEach(e=>e.classList.toggle("cur",!!cur&&e.getAttribute("data-id")===cur.id))}
 const shuffled=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
 const playLikes=()=>{if(!ST.likes.length){toast("Сначала отметь пару треков сердечком");return}play(shuffled(ST.likes),0)};
@@ -157,16 +158,20 @@ function updSg(){const q=$("q").value.trim(),my=++sgTok;clearTimeout(sgT);
   const l4=loc.slice(0,4);paintSg(l4);
   sgT=setTimeout(()=>ytSug(q).then(r=>{if(my!==sgTok)return;const all=l4.slice();r.forEach(x=>{if(x.toLowerCase()!==lo&&!has(all,x))all.push([x,"s"])});paintSg(all.slice(0,8))}).catch(()=>{}),180)}
 function doSearch(q){addHist(q);const sgE=$("sg");if(sgE)sgE.innerHTML="";const g=$("sres");g.style.display="";g.innerHTML='<div class="sk" style="height:56px;margin-bottom:10px"></div>'.repeat(6);
-  settle([ytSearch(q),audSearch(q),jamSearch(q)]).then(rs=>{const l=merge(rs);lists.search=l;const w=warn(rs);
-    g.innerHTML=(w?'<p class="msg" style="margin-bottom:10px">'+w+'</p>':"")+(l.length?l.map((t,i)=>rowH(t,"search",i)).join(""):'<p class="msg">По запросу «'+esc(q)+'» ничего нет. Попробуй другое слово.</p>');mark()})}
+  settle([ytSearch(q),audSearch(q),jamSearch(q)]).then(rs=>{const free=merge([rs[1],rs[2]]),yt=rs[0].ok?rs[0].v:[],f1=free.slice(0,8),l=f1.concat(yt,free.slice(8));lists.search=l;const w=warn(rs);
+    const hd=t=>'<h3 class="gh">'+t+'</h3>';
+    g.innerHTML=(w?'<p class="msg" style="margin-bottom:10px">'+w+'</p>':"")+(l.length?l.map((t,i)=>(i===0&&f1.length?hd("Без рекламы"):"")+(i===f1.length&&yt.length?hd("YouTube · может быть реклама"):"")+rowH(t,"search",i)).join(""):'<p class="msg">По запросу «'+esc(q)+'» ничего нет. Попробуй другое слово.</p>');mark()})}
 const GEN=[["Электроника","Electronic",24],["Хип-хоп","Hip-Hop",350],["Лоу-фай","lofi",160],["Рок","rock",8],["Поп","pop",320],["Джаз","jazz",40],["Классика","classical",215],["Инди","indie",280]];
 function search(){main.innerHTML='<div class="pg px"><h1>Поиск</h1><label class="sb"><svg class="i" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg><input id="q" type="search" placeholder="Песня, исполнитель, жанр" enterkeyhint="search" autocomplete="off" autocorrect="off" spellcheck="false"></label><div id="sg"></div><div id="sres"><h2 style="margin-top:22px">Жанры</h2><div class="gen">'+GEN.map(g=>'<button class="g" data-g="'+g[1]+'" style="background:hsl('+g[2]+' 62% 38%)">'+g[0]+'</button>').join("")+'</div></div></div>';
   const q=$("q");q.addEventListener("keydown",e=>{if(e.key==="Enter"&&q.value.trim()){q.blur();doSearch(q.value.trim())}});
   q.addEventListener("input",updSg);q.addEventListener("focus",()=>{if(!q.value.trim())updSg()})}
 let libTab="likes";
-function lib(){const arr=libTab==="likes"?ST.likes:ST.recent;lists.lib=arr;
-  main.innerHTML='<div class="pg px"><h1>Библиотека</h1><div class="chips"><button class="chip'+(libTab==="likes"?" on":"")+'" data-c="likes">Любимое</button><button class="chip'+(libTab==="recent"?" on":"")+'" data-c="recent">Недавние</button></div>'+
-   (arr.length?'<button class="btn" id="plAll" style="margin:4px 0 12px">'+PLAY+'Играть всё</button>'+arr.map((t,i)=>rowH(t,"lib",i)).join(""):'<p class="msg">'+(libTab==="likes"?"Здесь пока пусто. Нажми сердечко у трека, и он появится тут.":"Ты пока ничего не слушал.")+'</p>')+'</div>';
+function lib(){const pl=ST.pls||[];let p=null;if(/^p:/.test(libTab)){p=pl.find(x=>"p:"+x.id===libTab);if(!p)libTab="likes"}
+  const arr=p?p.tracks:libTab==="likes"?ST.likes:ST.recent;lists.lib=arr;
+  const chips='<div class="chips"><button class="chip'+(libTab==="likes"?" on":"")+'" data-c="likes">Любимое</button><button class="chip'+(libTab==="recent"?" on":"")+'" data-c="recent">Недавние</button>'+pl.map(x=>'<button class="chip'+(libTab==="p:"+x.id?" on":"")+'" data-c="p:'+x.id+'">'+esc(x.name)+'</button>').join("")+'<button class="chip" data-c="new" aria-label="Новый плейлист">＋ Плейлист</button></div>';
+  const empty=p?"В плейлисте пока пусто. Нажми «⋯» у любого трека и добавь его сюда.":libTab==="likes"?"Здесь пока пусто. Нажми сердечко у трека, и он появится тут.":"Ты пока ничего не слушал.";
+  main.innerHTML='<div class="pg px"><h1>'+(p?esc(p.name):"Библиотека")+'</h1>'+chips+(p?'<div class="pt"><button class="btn g2" id="plRn">Переименовать</button><button class="btn g2" id="plDl">Удалить</button></div>':"")+
+   (arr.length?'<button class="btn" id="plAll" style="margin:4px 0 12px">'+PLAY+'Играть всё</button>'+arr.map((t,i)=>rowH(t,"lib",i)).join(""):'<p class="msg">'+empty+'</p>')+'</div>';
   if($("plAll"))$("plAll").onclick=()=>play(arr,0);mark()}
 const tabsEl=$("tabs"),ind=$("ind");
 function moveInd(){const b=tabsEl.querySelector(".tb.on");if(!b)return;ind.style.width=b.offsetWidth+"px";ind.style.setProperty("--tx",b.offsetLeft+"px")}
@@ -181,11 +186,14 @@ function endPress(e){if(!pd)return;const m=pd.moved;pd=null;tabsEl.classList.rem
   if(m){dragged=true;setTimeout(()=>dragged=false,60);const cx=parseFloat(ind.style.getPropertyValue("--tx"))+ind.offsetWidth/2;let best=null,bd=1e9;tabsEl.querySelectorAll(".tb").forEach(b=>{const d=Math.abs(b.offsetLeft+b.offsetWidth/2-cx);if(d<bd){bd=d;best=b}});if(best)show(best.dataset.v)}}
 tabsEl.addEventListener("pointerup",endPress);tabsEl.addEventListener("pointercancel",endPress);addEventListener("resize",moveInd);
 main.addEventListener("click",e=>{
+  const mo=e.target.closest(".more");if(mo){openTs(lists[mo.dataset.k][+mo.dataset.i]);return}
+  if(e.target.closest("#plRn")){const p=(ST.pls||[]).find(x=>"p:"+x.id===libTab);if(p)nameForm("Переименовать",p.name,v=>{p.name=v;save();shClose();lib()});return}
+  if(e.target.closest("#plDl")){const p=(ST.pls||[]).find(x=>"p:"+x.id===libTab);if(p){shMode="d";shOpen("Удалить «"+p.name+"»?",'<p class="hint">Треки останутся в каталоге, пропадёт только список.</p><button class="mi dg" data-a="delY">Удалить плейлист</button><button class="mi" data-a="cancel">Отмена</button>')}return}
   const lk=e.target.closest(".like");if(lk){const t=lists[lk.dataset.k][+lk.dataset.i];like(t,lk);const on=isLiked(t);lk.classList.toggle("on",on);const sv=lk.querySelector("svg");if(sv)sv.style.fill=on?"currentColor":"none";return}
   if(e.target.closest(".circ")){playLikes();return}
   if(e.target.closest("#lkB")){libTab="likes";show("lib");return}
   const al=e.target.closest("[data-all]");if(al){const l=lists[al.dataset.all];if(l&&l.length)play(l,0);return}
-  const ch=e.target.closest(".chip");if(ch){libTab=ch.dataset.c;lib();return}
+  const ch=e.target.closest(".chip");if(ch){if(ch.dataset.c==="new"){nameForm("Новый плейлист","",v=>{const p={id:uid(),name:v,tracks:[]};ST.pls.push(p);libTab="p:"+p.id;save();shClose();lib()});return}libTab=ch.dataset.c;lib();return}
   const sg=e.target.closest(".sgi");if(sg){const v=sg.dataset.s;$("q").value=v;$("q").blur();doSearch(v);return}
   const sf=e.target.closest(".sgf");if(sf){$("q").value=sf.dataset.f;$("q").focus();updSg();return}
   if(e.target.closest("#sgClr")){ST.hist=[];save();updSg();return}
@@ -217,14 +225,63 @@ swipe(main,{left:()=>goTab(1),right:()=>goTab(-1),skip:".shelf,.chips,.sb",min:7
 /* волна при нажатии */
 document.addEventListener("pointerdown",e=>{const b=e.target.closest("button");if(!b)return;const r=b.getBoundingClientRect(),d=Math.max(r.width,r.height),s=document.createElement("span");s.className="rpl";s.style.cssText="width:"+d+"px;height:"+d+"px;left:"+(e.clientX-r.left-d/2)+"px;top:"+(e.clientY-r.top-d/2)+"px";b.appendChild(s);setTimeout(()=>s.remove(),650)});
 /* настройки */
-const APP_VER="2.2";
+const APP_VER="2.3";
 $("ver").textContent=APP_VER;
 $("setX").onclick=$("setNo").onclick=()=>$("set").classList.remove("on");
 $("updB").onclick=async()=>{const b=$("updB");b.disabled=true;b.textContent="Обновляю…";try{if("serviceWorker" in navigator){const rs=await navigator.serviceWorker.getRegistrations();await Promise.all(rs.map(r=>r.unregister()))}if("caches" in window){const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)))}}catch(e){}location.replace(location.pathname+"?v="+Date.now())};
-$("setB").onclick=()=>{$("liteS").value=ST.lite||"auto";$("yk").value=ST.yk;$("jk").value=ST.jk;$("set").classList.add("on")};
+$("setB").onclick=()=>{$("liteS").value=ST.lite||"auto";$("thS").value=ST.theme||"cover";$("yk").value=ST.yk;$("jk").value=ST.jk;$("set").classList.add("on")};
 $("setNo").onclick=()=>$("set").classList.remove("on");
-$("setOk").onclick=()=>{ST.yk=$("yk").value.trim();ST.jk=$("jk").value.trim();ST.lite=$("liteS").value;applyLite(ST.lite==="on"||(ST.lite==="auto"&&liteAuto()));save();$("set").classList.remove("on");toast("Сохранено");show(view)};
+$("setOk").onclick=()=>{ST.yk=$("yk").value.trim();ST.jk=$("jk").value.trim();ST.lite=$("liteS").value;ST.theme=$("thS").value;applyTheme();paintBg();applyLite(ST.lite==="on"||(ST.lite==="auto"&&liteAuto()));save();$("set").classList.remove("on");toast("Сохранено");show(view)};
 $("set").addEventListener("click",e=>{if(e.target===$("set"))$("set").classList.remove("on")});
+
+/* ---------- шторка: очередь и плейлисты ---------- */
+const shEl=$("shW"),shB=$("shBd"),shT=$("shTt");let shMode="",tsT=null,nfOk=null;
+const uid=()=>"p"+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
+const shOpen=(t,h)=>{shT.textContent=t;shB.innerHTML=h;shEl.classList.add("on")},shClose=()=>{shEl.classList.remove("on");shMode=""};
+function openQ(){shMode="q";const h=Q.length?Q.map((t,i)=>'<div class="qr'+(i===qi?' cur':'')+'"><div class="cv" style="'+artCss(t)+'"></div><button class="t" data-qp="'+i+'"><b>'+esc(t.title)+'</b><span>'+esc(t.artist)+'</span></button>'+(i===qi?'<em>играет</em>':(i!==qi+1?'<button class="qb" data-qn="'+i+'" aria-label="Играть следующим">↑</button>':'')+'<button class="qb" data-qx="'+i+'" aria-label="Убрать">✕</button>')+'</div>').join(""):'<p class="msg">Очередь пустая. Включи любой трек.</p>';shOpen("Очередь",h);const c=shB.querySelector(".cur");if(c)c.scrollIntoView({block:"center"})}
+function openTs(t){tsT=t;shMode="t";const pl=ST.pls||[];shOpen(t.title,'<button class="mi" data-a="nx">Играть следующим</button><button class="mi" data-a="end">В конец очереди</button>'+(pl.length?'<div class="mh">Плейлисты</div>':"")+pl.map(p=>'<button class="mi" data-a="pl" data-p="'+p.id+'"><span>'+esc(p.name)+'</span><i>'+(p.tracks.some(x=>x.id===t.id)?"✓":"")+'</i></button>').join("")+'<button class="mi ac" data-a="new">＋ Новый плейлист</button>')}
+function nameForm(t,v,ok){shMode="f";nfOk=ok;shOpen(t,'<form id="nf"><input id="nfi" maxlength="40" placeholder="Название" value="'+esc(v||"")+'" autocomplete="off"><button class="btn" type="submit">Готово</button></form>');setTimeout(()=>{try{$("nfi").focus()}catch(e){}},60)}
+shEl.addEventListener("submit",e=>{e.preventDefault();const v=$("nfi").value.trim();if(v&&nfOk)nfOk(v)});
+shEl.addEventListener("click",e=>{
+  if(e.target.closest(".bk")||e.target.closest("#shX")){shClose();return}
+  const qp=e.target.closest("[data-qp]");if(qp){qi=+qp.dataset.qp;load(true);openQ();return}
+  const qx=e.target.closest("[data-qx]");if(qx){const i=+qx.dataset.qx;Q.splice(i,1);if(i<qi)qi--;openQ();return}
+  const qn=e.target.closest("[data-qn]");if(qn){const i=+qn.dataset.qn,t=Q.splice(i,1)[0];if(i<qi)qi--;Q.splice(qi+1,0,t);openQ();return}
+  const a=e.target.closest("[data-a]");if(!a)return;const k=a.dataset.a;
+  if(k==="cancel"){shClose();return}
+  if(k==="delY"){ST.pls=ST.pls.filter(x=>"p:"+x.id!==libTab);libTab="likes";save();shClose();lib();return}
+  if(k==="nx"){if(!Q.length)play([tsT],0);else Q.splice(qi+1,0,tsT);toast("Сыграет следующим");shClose();return}
+  if(k==="end"){if(!Q.length)play([tsT],0);else Q.push(tsT);toast("Добавлено в очередь");shClose();return}
+  if(k==="new"){const t=tsT;nameForm("Новый плейлист","",v=>{ST.pls.push({id:uid(),name:v,tracks:[t]});save();toast("Плейлист создан");shClose();if(view==="lib")lib()});return}
+  if(k==="pl"){const p=ST.pls.find(x=>x.id===a.dataset.p);if(!p)return;const i=p.tracks.findIndex(x=>x.id===tsT.id);if(i>=0)p.tracks.splice(i,1);else p.tracks.unshift(tsT);save();openTs(tsT);if(view==="lib")lib()}});
+$("fQ").onclick=openQ;
+
+/* ---------- тексты песен (lrclib.net) ---------- */
+const LY={};let lyOn=false,lyL=null,lyI=-1,lyTm=0,lyTok=0;
+const lrc=s=>String(s).split("\n").map(l=>{const m=l.match(/^\[(\d+):(\d+(?:\.\d+)?)\]\s*(.*)$/);return m&&m[3].trim()?{t:+m[1]*60+ +m[2],s:m[3].trim()}:null}).filter(Boolean);
+function lyGet(t){if(LY[t.id]!==undefined)return Promise.resolve(LY[t.id]);
+  const q=(t.title+" "+String(t.artist||"").replace(/\s*-\s*Topic$/i,"")).trim();
+  return getJ("https://lrclib.net/api/search?q="+encodeURIComponent(q)).then(r=>{
+    let c=(r||[]).filter(x=>x.syncedLyrics||x.plainLyrics&&!x.instrumental);
+    if(t.dur)c.sort((x,y)=>Math.abs(x.duration-t.dur)-Math.abs(y.duration-t.dur));
+    c=c.filter(x=>!t.dur||!x.duration||Math.abs(x.duration-t.dur)<20);
+    const s=c.find(x=>x.syncedLyrics),p=c.find(x=>x.plainLyrics);
+    const o=s?{sync:lrc(s.syncedLyrics)}:p?{plain:String(p.plainLyrics).split("\n").filter(x=>x.trim())}:null;LY[t.id]=o;return o})}
+const lyEl=()=>$("lyIn");
+function lyPaint(o){lyL=null;lyI=-1;const e=lyEl();
+  if(o===undefined){e.innerHTML='<p class="lm">Ищу текст…</p>';return}
+  if(!o){e.innerHTML='<p class="lm">Текста для этой песни нет.</p>';return}
+  if(o.sync&&o.sync.length){lyL=o.sync;e.innerHTML=o.sync.map((l,i)=>'<p data-t="'+l.t+'" data-n="'+i+'">'+esc(l.s)+'</p>').join("")}
+  else e.innerHTML=(o.plain||[]).map(l=>'<p class="pl">'+esc(l)+'</p>').join("");e.scrollTop=0}
+function lyRefresh(){if(!lyOn||!cur)return;const t=cur;lyPaint(undefined);lyGet(t).then(o=>{if(cur===t&&lyOn)lyPaint(o)},()=>{if(cur===t&&lyOn)lyEl().innerHTML='<p class="lm">Не получилось загрузить текст.</p>'})}
+function lyTick(){if(!lyL)return;let c=0;try{c=ymode&&yp&&yp.getCurrentTime?yp.getCurrentTime():au.currentTime}catch(e){}c+=.25;let k=-1;for(let i=0;i<lyL.length;i++){if(lyL[i].t<=c)k=i;else break}
+  if(k===lyI)return;lyI=k;const e=lyEl();e.querySelectorAll("p.on").forEach(x=>x.classList.remove("on"));const p=e.querySelector('[data-n="'+k+'"]');if(p){p.classList.add("on");e.scrollTo({top:p.offsetTop-e.clientHeight/2+p.clientHeight/2,behavior:"smooth"})}}
+$("fLy").onclick=()=>{lyOn=!lyOn;$("full").classList.toggle("ly",lyOn);document.body.classList.toggle("ly",lyOn);$("fLy").classList.toggle("on",lyOn);clearInterval(lyTm);if(lyOn){lyRefresh();lyTm=setInterval(lyTick,250)}};
+$("lyIn").addEventListener("click",e=>{const p=e.target.closest("p[data-t]");if(!p)return;const t=+p.dataset.t;try{if(ymode&&yp)yp.seekTo(t,true);else au.currentTime=t}catch(x){}});
+
+/* ---------- тема ---------- */
+const applyTheme=()=>{document.documentElement.dataset.th=ST.theme||"cover";const m=document.querySelector('meta[name=theme-color]');if(m)m.content=ST.theme==="light"?"#f4f4f6":"#111111"};
+applyTheme();
 const applyLite=on=>{document.documentElement.classList.toggle("lite",!!on);BG.lite(!!on)};
 const liteAuto=()=>{try{return matchMedia("(prefers-reduced-motion: reduce)").matches||(navigator.deviceMemory&&navigator.deviceMemory<=3)||(navigator.hardwareConcurrency&&navigator.hardwareConcurrency<=2)}catch(e){return false}};
 applyLite(ST.lite==="on"||(ST.lite!=="off"&&liteAuto()));
