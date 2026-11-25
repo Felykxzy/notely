@@ -2,7 +2,7 @@
 "use strict";
 const $=i=>document.getElementById(i);
 const AUD="https://api.audius.co/v1",JAM="https://api.jamendo.com/v3.0",APP="notely";
-const CF=window.NOTELY||{};const ST={jk:"",ak:"",yk:"",likes:[],recent:[],hist:[],vol:80,scene:"auto"};
+const CF=window.NOTELY||{};const ST={jk:"",ak:"",yk:"",likes:[],recent:[],hist:[],vol:80,scene:"auto",lite:"auto"};
 try{Object.assign(ST,JSON.parse(localStorage.getItem("notely2")||"{}"))}catch(e){}
 const save=()=>{try{localStorage.setItem("notely2",JSON.stringify(ST))}catch(e){}};
 const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
@@ -217,14 +217,18 @@ swipe(main,{left:()=>goTab(1),right:()=>goTab(-1),skip:".shelf,.chips,.sb",min:7
 /* волна при нажатии */
 document.addEventListener("pointerdown",e=>{const b=e.target.closest("button");if(!b)return;const r=b.getBoundingClientRect(),d=Math.max(r.width,r.height),s=document.createElement("span");s.className="rpl";s.style.cssText="width:"+d+"px;height:"+d+"px;left:"+(e.clientX-r.left-d/2)+"px;top:"+(e.clientY-r.top-d/2)+"px";b.appendChild(s);setTimeout(()=>s.remove(),650)});
 /* настройки */
-const APP_VER="2.1";
+const APP_VER="2.2";
 $("ver").textContent=APP_VER;
 $("setX").onclick=$("setNo").onclick=()=>$("set").classList.remove("on");
 $("updB").onclick=async()=>{const b=$("updB");b.disabled=true;b.textContent="Обновляю…";try{if("serviceWorker" in navigator){const rs=await navigator.serviceWorker.getRegistrations();await Promise.all(rs.map(r=>r.unregister()))}if("caches" in window){const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)))}}catch(e){}location.replace(location.pathname+"?v="+Date.now())};
-$("setB").onclick=()=>{$("yk").value=ST.yk;$("jk").value=ST.jk;$("set").classList.add("on")};
+$("setB").onclick=()=>{$("liteS").value=ST.lite||"auto";$("yk").value=ST.yk;$("jk").value=ST.jk;$("set").classList.add("on")};
 $("setNo").onclick=()=>$("set").classList.remove("on");
-$("setOk").onclick=()=>{ST.yk=$("yk").value.trim();ST.jk=$("jk").value.trim();save();$("set").classList.remove("on");toast("Сохранено");show(view)};
+$("setOk").onclick=()=>{ST.yk=$("yk").value.trim();ST.jk=$("jk").value.trim();ST.lite=$("liteS").value;applyLite(ST.lite==="on"||(ST.lite==="auto"&&liteAuto()));save();$("set").classList.remove("on");toast("Сохранено");show(view)};
 $("set").addEventListener("click",e=>{if(e.target===$("set"))$("set").classList.remove("on")});
+const applyLite=on=>{document.documentElement.classList.toggle("lite",!!on);BG.lite(!!on)};
+const liteAuto=()=>{try{return matchMedia("(prefers-reduced-motion: reduce)").matches||(navigator.deviceMemory&&navigator.deviceMemory<=3)||(navigator.hardwareConcurrency&&navigator.hardwareConcurrency<=2)}catch(e){return false}};
+applyLite(ST.lite==="on"||(ST.lite!=="off"&&liteAuto()));
+if(ST.lite==="auto")BG.onSlow(()=>{applyLite(true)});
 BG.init();
 show("home");setTimeout(moveInd,300);if(document.fonts&&document.fonts.ready)document.fonts.ready.then(moveInd);
 if("serviceWorker" in navigator&&location.protocol.startsWith("http")){navigator.serviceWorker.register("sw.js").catch(()=>{})}

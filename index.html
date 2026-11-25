@@ -186,6 +186,12 @@ input[type=range]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;bac
 .sgi svg{width:18px;height:18px;color:var(--mute)}.sgi span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .sgf{padding:12px;color:var(--mute);border-radius:50%}.sgf svg{width:18px;height:18px}
 .sgh{display:flex;justify-content:space-between;align-items:center;margin:14px 0 2px;color:var(--mute);font-size:13px;font-weight:700}.sgh button{color:var(--ac);font-size:13px;font-weight:700;padding:6px 0}
+
+.lite *,.lite *::before,.lite *::after{backdrop-filter:none!important;-webkit-backdrop-filter:none!important;animation-duration:.01s!important;animation-iteration-count:1!important}
+.lite #tabs{background:rgba(38,38,42,.94)!important}.lite #bar{background:rgba(30,30,34,.96)!important}
+.lite *{transition-duration:.15s!important;text-shadow:none!important}
+.lite .tile,.lite .sq .cv,.lite .nt .cv{box-shadow:none!important}
+#set select{width:100%;font-size:16px;padding:10px;border-radius:12px;background:var(--glass);color:inherit;border:1px solid var(--line);margin-top:6px}
 </style>
 </head>
 <body>
@@ -241,6 +247,11 @@ input[type=range]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;bac
     <h3>Свои ключи <small>необязательно, сайт работает и без них</small></h3>
     <label>YouTube<input id="yk" placeholder="начинается с AIza…" autocomplete="off"><a href="https://console.cloud.google.com/apis/library/youtube.googleapis.com" target="_blank" rel="noopener">как получить ключ</a></label>
     <label>Jamendo<input id="jk" placeholder="например 1a2b3c4d" autocomplete="off"><a href="https://devportal.jamendo.com" target="_blank" rel="noopener">как получить ключ</a></label>
+  </section>
+  <section>
+    <h3>Плавность</h3>
+    <label>Экономный режим<select id="liteS"><option value="auto">Сам (если телефон тормозит)</option><option value="on">Всегда включён</option><option value="off">Выключен</option></select></label>
+    <p class="hint">Убирает размытие и упрощает фон, чтобы всё работало быстро даже при экономии энергии.</p>
   </section>
   <section>
     <h3>Сайт</h3>
