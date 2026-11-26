@@ -40,6 +40,13 @@ jobs:
           ICON=$(find ios/App/App/Assets.xcassets/AppIcon.appiconset -name "*.png" | head -1)
           sips -z 1024 1024 icon-512.png --out "$ICON"
 
+      - name: Audio session (playback in background)
+        run: |
+          F=ios/App/App/AppDelegate.swift
+          perl -pi -e 'print "import AVFoundation\n" if $. == 1' $F
+          perl -pi -e 's#// Override point for customization after application launch\.#try? AVAudioSession.sharedInstance().setCategory(.playback, mode: .default, options: []); try? AVAudioSession.sharedInstance().setActive(true)#' $F
+          grep -n "AVAudioSession" $F || echo "WARN: AppDelegate not patched"
+
       - name: Allow background audio
         run: |
           PLIST=ios/App/App/Info.plist

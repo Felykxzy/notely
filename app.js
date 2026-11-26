@@ -321,6 +321,14 @@ const eqUI=()=>{["eqB","eqM","eqT"].forEach((id,i)=>{$(id).value=ST.eqv[i];$(id+
 const eqSet=v=>{const was=eqOn();ST.eqv=v;save();eqUI();if(ac){eqApply()}else if(!was&&eqOn()&&cur&&cur.src!=="YouTube")toast("Эквалайзер включится со следующего трека");if(ac&&!eqN)eqInit()};
 $("eqS").onchange=function(){if(EQP[this.value])eqSet(EQP[this.value].slice())};
 ["eqB","eqM","eqT"].forEach((id,i)=>$(id).addEventListener("input",function(){const v=ST.eqv.slice();v[i]=+this.value;eqSet(v)}));
+
+/* музыка из YouTube не должна замолкать, когда выходишь из приложения */
+let bgTm=[];
+const bgKeep=()=>{bgTm.forEach(clearTimeout);bgTm=[];if(!ymode||!yp||!document.hidden)return;let on=false;try{on=yp.getPlayerState()===1||wantYt}catch(e){}
+  if(!on)return;[250,700,1500,3000,6000].forEach(ms=>bgTm.push(setTimeout(()=>{try{if(document.hidden&&ymode&&yp.getPlayerState()!==1&&wantYt)yp.playVideo()}catch(e){}},ms)))};
+let wantYt=false;
+document.addEventListener("visibilitychange",()=>{if(document.hidden){try{wantYt=ymode&&yp&&yp.getPlayerState()===1}catch(e){wantYt=false}bgKeep()}else{bgTm.forEach(clearTimeout)}});
+addEventListener("pagehide",()=>{try{wantYt=ymode&&yp&&yp.getPlayerState()===1}catch(e){}bgKeep()});
 const applyLite=on=>{document.documentElement.classList.toggle("lite",!!on);BG.lite(!!on)};
 const liteAuto=()=>{try{return matchMedia("(prefers-reduced-motion: reduce)").matches||(navigator.deviceMemory&&navigator.deviceMemory<=3)||(navigator.hardwareConcurrency&&navigator.hardwareConcurrency<=2)}catch(e){return false}};
 applyLite(ST.lite==="on"||(ST.lite!=="off"&&liteAuto()));
