@@ -2,7 +2,7 @@
 "use strict";
 const $=i=>document.getElementById(i);
 const AUD="https://api.audius.co/v1",JAM="https://api.jamendo.com/v3.0",APP="notely";
-const CF=window.NOTELY||{};const ST={jk:"",ak:"",yk:"",likes:[],recent:[],hist:[],pls:[],theme:"cover",vol:80,scene:"auto",lite:"auto"};
+const CF=window.NOTELY||{};const ST={jk:"",ak:"",yk:"",likes:[],recent:[],hist:[],pls:[],theme:"cover",sf:"all",orig:true,vol:80,scene:"auto",lite:"auto"};
 try{Object.assign(ST,JSON.parse(localStorage.getItem("notely2")||"{}"))}catch(e){}
 const save=()=>{try{localStorage.setItem("notely2",JSON.stringify(ST))}catch(e){}};
 const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
@@ -163,9 +163,25 @@ function updSg(){const q=$("q").value.trim(),my=++sgTok;clearTimeout(sgT);
   const l4=loc.slice(0,4);paintSg(l4);
   sgT=setTimeout(()=>ytSug(q).then(r=>{if(my!==sgTok)return;const all=l4.slice();r.forEach(x=>{if(x.toLowerCase()!==lo&&!has(all,x))all.push([x,"s"])});paintSg(all.slice(0,8))}).catch(()=>{}),180)}
 function doSearch(q){addHist(q);const sgE=$("sg");if(sgE)sgE.innerHTML="";const g=$("sres");g.style.display="";g.innerHTML='<div class="sk" style="height:56px;margin-bottom:10px"></div>'.repeat(6);
-  settle([ytSearch(q),audSearch(q),jamSearch(q)]).then(rs=>{const free=merge([rs[1],rs[2]]),yt=rs[0].ok?rs[0].v:[],f1=free.slice(0,8),l=f1.concat(yt,free.slice(8));lists.search=l;const w=warn(rs);
-    const hd=t=>'<h3 class="gh">'+t+'</h3>';
-    g.innerHTML=(w?'<p class="msg" style="margin-bottom:10px">'+w+'</p>':"")+(l.length?l.map((t,i)=>(i===0&&f1.length?hd("Без рекламы"):"")+(i===f1.length&&yt.length?hd("YouTube · может быть реклама"):"")+rowH(t,"search",i)).join(""):'<p class="msg">По запросу «'+esc(q)+'» ничего нет. Попробуй другое слово.</p>');mark()})}
+  settle([ytSearch(q),audSearch(q),jamSearch(q)]).then(rs=>{SR={q:q,rs:rs,w:warn(rs)};renderSr()})}
+let SR=null;
+const NOISE=/(podcast|подкаст|interview|интервью|reaction|reacts? to|review|обзор|tutorial|урок|trailer|трейлер|gameplay|walkthrough|news|новости|live\s*stream|стрим|compilation|сборник|full album|playlist|type beat|karaoke|караоке|nightcore|8d audio|\d+\s*(hours?|час)|\bhours?\b|shorts?\b|asmr)/i;
+const VERS=/(remix|ремикс|cover|кавер|slowed|sped\s*up|reverb|mashup|мэшап|instrumental|минус|bass\s*boost|acoustic version|tribute|rework|bootleg|edit\b)/i;
+const words=s=>String(s).toLowerCase().split(/[^a-zа-яё0-9]+/i).filter(w=>w.length>1);
+function cleanRes(list,q,yt){const qw=words(q),qs=q.toLowerCase();
+  let r=list.filter(t=>{const h=(t.title+" "+t.artist).toLowerCase();
+    if(t.dur&&(t.dur<45||t.dur>(yt?900:1200)))return false;
+    if(NOISE.test(h)&&!NOISE.test(qs))return false;
+    if(ST.orig&&VERS.test(h)&&!VERS.test(qs))return false;return true});
+  if(qw.length){const need=Math.max(1,Math.ceil(qw.length*.6)),rel=r.filter(t=>{const h=(t.title+" "+t.artist).toLowerCase();return qw.filter(w=>h.indexOf(w)>=0).length>=need});if(rel.length>=1)r=rel}
+  return r.length>=1?r:list.filter(t=>!NOISE.test((t.title+" "+t.artist).toLowerCase()))}
+function renderSr(){if(!SR||!$("sres"))return;const g=$("sres"),q=SR.q,rs=SR.rs;
+  const fr=merge([rs[1],rs[2]]),yr=rs[0].ok?rs[0].v:[];
+  const free=ST.sf==="yt"?[]:cleanRes(fr,q,false),yt=ST.sf==="free"?[]:cleanRes(yr,q,true),f1=free.slice(0,8),l=f1.concat(yt,free.slice(8));lists.search=l;
+  const hd=t=>'<h3 class="gh">'+t+'</h3>';
+  const chip=(k,t)=>'<button class="chip'+(ST.sf===k?" on":"")+'" data-sf="'+k+'">'+t+'</button>';
+  const bar='<div class="chips" id="sfb">'+chip("all","Всё")+chip("free","Без рекламы")+chip("yt","YouTube")+'<button class="chip'+(ST.orig?" on":"")+'" data-orig="1">Только оригиналы</button></div>';
+  g.innerHTML=bar+(SR.w?'<p class="msg" style="margin-bottom:10px">'+SR.w+'</p>':"")+(l.length?l.map((t,i)=>(i===0&&f1.length&&ST.sf==="all"?hd("Без рекламы"):"")+(i===f1.length&&yt.length&&ST.sf==="all"?hd("YouTube · может быть реклама"):"")+rowH(t,"search",i)).join(""):'<p class="msg">По запросу «'+esc(q)+'» ничего нет. Попробуй другое слово или выключи «Только оригиналы».</p>');mark()}
 const GEN=[["Электроника","Electronic",24],["Хип-хоп","Hip-Hop",350],["Лоу-фай","lofi",160],["Рок","rock",8],["Поп","pop",320],["Джаз","jazz",40],["Классика","classical",215],["Инди","indie",280]];
 function search(){main.innerHTML='<div class="pg px"><h1>Поиск</h1><label class="sb"><svg class="i" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg><input id="q" type="search" placeholder="Песня, исполнитель, жанр" enterkeyhint="search" autocomplete="off" autocorrect="off" spellcheck="false"></label><div id="sg"></div><div id="sres"><h2 style="margin-top:22px">Жанры</h2><div class="gen">'+GEN.map(g=>'<button class="g" data-g="'+g[1]+'" style="background:hsl('+g[2]+' 62% 38%)">'+g[0]+'</button>').join("")+'</div></div></div>';
   const q=$("q");q.addEventListener("keydown",e=>{if(e.key==="Enter"&&q.value.trim()){q.blur();doSearch(q.value.trim())}});
@@ -191,6 +207,8 @@ function endPress(e){if(!pd)return;const m=pd.moved;pd=null;tabsEl.classList.rem
   if(m){dragged=true;setTimeout(()=>dragged=false,60);const cx=parseFloat(ind.style.getPropertyValue("--tx"))+ind.offsetWidth/2;let best=null,bd=1e9;tabsEl.querySelectorAll(".tb").forEach(b=>{const d=Math.abs(b.offsetLeft+b.offsetWidth/2-cx);if(d<bd){bd=d;best=b}});if(best)show(best.dataset.v)}}
 tabsEl.addEventListener("pointerup",endPress);tabsEl.addEventListener("pointercancel",endPress);addEventListener("resize",moveInd);
 main.addEventListener("click",e=>{
+  const sfc=e.target.closest("[data-sf]");if(sfc){ST.sf=sfc.dataset.sf;save();renderSr();return}
+  if(e.target.closest("[data-orig]")){ST.orig=!ST.orig;save();renderSr();return}
   const mo=e.target.closest(".more");if(mo){openTs(lists[mo.dataset.k][+mo.dataset.i]);return}
   if(e.target.closest("#plRn")){const p=(ST.pls||[]).find(x=>"p:"+x.id===libTab);if(p)nameForm("Переименовать",p.name,v=>{p.name=v;save();shClose();lib()});return}
   if(e.target.closest("#plDl")){const p=(ST.pls||[]).find(x=>"p:"+x.id===libTab);if(p){shMode="d";shOpen("Удалить «"+p.name+"»?",'<p class="hint">Треки останутся в каталоге, пропадёт только список.</p><button class="mi dg" data-a="delY">Удалить плейлист</button><button class="mi" data-a="cancel">Отмена</button>')}return}
