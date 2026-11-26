@@ -243,6 +243,7 @@ html[data-th=light] .tile.cur{background:#ffe3d6}html[data-th=light] .pill{borde
 html[data-th=light] .chip{background:#fff}html[data-th=light] .chip.on{background:#141418}
 html[data-th=light] .btn.g2{background:#ececf0;color:var(--ink)}
 html[data-th=light] #shW .pn{background:#fff}html[data-th=light] #shW .bk{background:#0006}
+.eqr{display:grid!important;grid-template-columns:78px 1fr 30px;align-items:center;gap:10px;margin-top:8px;text-align:left}.eqr input{width:100%;min-width:0;padding:0;border:0;background:none}.eqr output{width:26px;text-align:right;font-weight:700;font-size:13px;color:var(--mute)}
 </style>
 </head>
 <body>
@@ -304,6 +305,14 @@ html[data-th=light] #shW .pn{background:#fff}html[data-th=light] #shW .bk{backgr
   <section>
     <h3>Вид</h3>
     <label>Тема<select id="thS"><option value="cover">Тёмная, цвета с обложки</option><option value="dark">Тёмная, спокойная</option><option value="light">Светлая</option></select></label>
+  </section>
+  <section>
+    <h3>Звук</h3>
+    <label>Эквалайзер<select id="eqS"><option value="off">Выкл</option><option value="bass">Бас</option><option value="vocal">Вокал</option><option value="bright">Яркий</option><option value="night">Ночной</option><option value="custom" disabled>Свой</option></select></label>
+    <label class="eqr">Низкие <input type="range" id="eqB" min="-10" max="10" step="1" value="0"><output id="eqBv">0</output></label>
+    <label class="eqr">Средние <input type="range" id="eqM" min="-10" max="10" step="1" value="0"><output id="eqMv">0</output></label>
+    <label class="eqr">Высокие <input type="range" id="eqT" min="-10" max="10" step="1" value="0"><output id="eqTv">0</output></label>
+    <p class="hint">Работает для треков из Audius и Jamendo. В YouTube звук менять нельзя.</p>
   </section>
   <section>
     <h3>Плавность</h3>

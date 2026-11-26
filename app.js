@@ -65,7 +65,9 @@ let Q=[],qi=-1,shuf=false,rep=false,cur=null,view="home";
 const isLiked=t=>ST.likes.some(x=>x.id===t.id);
 const lists={};
 function mq(el,txt){el.textContent=txt;el.classList.remove("run");el.dataset.t=txt;requestAnimationFrame(()=>{if(el.scrollWidth>el.parentNode.parentNode.clientWidth+2){el.textContent=txt+"   ·   "+txt+"   ·   ";el.classList.add("run")}})}
-function setIcons(p){const d=p?"M6 5h4v14H6zM14 5h4v14h-4z":"M8 5v14l11-7z";$("ppI").innerHTML=$("fPpI").innerHTML='<path d="'+d+'"/>';[$("ppB"),$("fPp")].forEach(b=>b.setAttribute("aria-label",p?"Пауза":"Играть"));
+function msPlay(p){try{navigator.mediaSession.playbackState=p?"playing":"paused"}catch(e){}}
+let msT=0;function msPos(d,c){const n=Date.now();if(n-msT<900||!d||!isFinite(d))return;msT=n;try{navigator.mediaSession.setPositionState({duration:d,position:Math.max(0,Math.min(c,d)),playbackRate:1})}catch(e){}}
+function setIcons(p){msPlay(p);const d=p?"M6 5h4v14H6zM14 5h4v14h-4z":"M8 5v14l11-7z";$("ppI").innerHTML=$("fPpI").innerHTML='<path d="'+d+'"/>';[$("ppB"),$("fPp")].forEach(b=>b.setAttribute("aria-label",p?"Пауза":"Играть"));
   document.documentElement.style.setProperty("--pl",p?"running":"paused");$("nowB").classList.toggle("pl",p);$("full").classList.toggle("pl",p);BG.play(p)}
 function play(list,i){Q=list.slice();qi=i;load(true)}
 let fails=0,tok=0,yp=null,ypReady=null,ymode=false,ytim=0;
@@ -73,7 +75,7 @@ function ensureYT(){if(ypReady)return ypReady;ypReady=new Promise((res,rej)=>{co
   if(window.YT&&window.YT.Player){YT_=window.YT;go()}else{window.onYouTubeIframeAPIReady=()=>{YT_=window.YT;go()};const s=document.createElement("script");s.src="https://www.youtube.com/iframe_api";s.onerror=()=>rej(new Error("yt-load"));document.head.appendChild(s)}});return ypReady}
 let YT_=null;
 function ysc(e){if(!ymode)return;const S=window.YT.PlayerState;if(e.data===S.PLAYING){setIcons(true);fails=0;const d=yp.getDuration();if(d&&cur)cur.dur=d}else if(e.data===S.PAUSED)setIcons(false);else if(e.data===S.ENDED){if(rep){yp.seekTo(0);yp.playVideo()}else next()}}
-function ytick(){if(!ymode||!yp||!yp.getCurrentTime)return;const c=yp.getCurrentTime()||0,d=yp.getDuration()||(cur&&cur.dur)||0,p=d?c/d*1000:0;[$("seek"),$("fSeek")].forEach(s=>{if(!s.dataset.d){s.value=p;rng(s,p/10)}});mprog(p/10);$("cur").textContent=$("fCur").textContent=fmt(c);$("dur").textContent=$("fDur").textContent=fmt(d)}
+function ytick(){if(!ymode||!yp||!yp.getCurrentTime)return;const c=yp.getCurrentTime()||0,d=yp.getDuration()||(cur&&cur.dur)||0,p=d?c/d*1000:0;[$("seek"),$("fSeek")].forEach(s=>{if(!s.dataset.d){s.value=p;rng(s,p/10)}});mprog(p/10);$("cur").textContent=$("fCur").textContent=fmt(c);$("dur").textContent=$("fDur").textContent=fmt(d);msPos(d,c)}
 setInterval(ytick,500);
 function showYt(on){const w=$("ytw"),v=!!(on&&cur&&cur.vid);w.hidden=!on;w.classList.toggle("vid",v);if(!on)w.classList.remove("big");else w.classList.toggle("big",v&&$("full").classList.contains("on"));$("fCv").style.visibility=v?"hidden":""}
 function resolve(t){if(t.src==="YouTube")return Promise.resolve("");if(t.src!=="Audius")return Promise.resolve(t.url);
@@ -84,7 +86,7 @@ function load(go){cur=Q[qi];if(!cur)return;const my=++tok;
   if("mediaSession" in navigator){try{navigator.mediaSession.metadata=new MediaMetadata({title:cur.title,artist:cur.artist,artwork:cur.art?[{src:cur.art,sizes:"480x480"}]:[]})}catch(e){}}
   if(cur.src==="YouTube"){au.pause();ymode=true;showYt(true);ensureYT().then(p=>{if(my!==tok)return;p.loadVideoById(cur.ytId);try{p.setVolume(ST.vol)}catch(e){}}).catch(()=>failTrack({name:"YouTube не загрузился"}));return}
   if(ymode){ymode=false;try{yp&&yp.pauseVideo()}catch(e){}showYt(false)}
-  resolve(cur).then(u=>{if(my!==tok)return;au.src=u;if(go)return au.play().then(()=>{fails=0}).catch(e=>failTrack(e))})}
+  resolve(cur).then(u=>{if(my!==tok)return;return eqPrep(u).then(()=>{if(my!==tok)return;au.src=u;if(go)return au.play().then(()=>{fails=0}).catch(e=>failTrack(e))})})}
 function failTrack(e){const why=e&&e.name==="NotAllowedError"?"Браузер не дал включить звук. Нажми на кнопку воспроизведения ещё раз.":"Трек не включился"+(e&&e.name?" ("+e.name+")":"");
   if(e&&e.name==="NotAllowedError"){toast(why);return}
   if(++fails>=3){toast("Не получается включить треки. Проверь интернет и попробуй другой трек.");fails=0;return}
@@ -96,7 +98,7 @@ au.addEventListener("play",()=>{if(!ymode)setIcons(true)});au.addEventListener("
 au.addEventListener("ended",()=>{if(ymode)return;if(rep){au.currentTime=0;au.play()}else next()});
 au.addEventListener("error",()=>{if(!ymode&&cur&&au.src){const c=au.error?au.error.code:0;failTrack({name:"код "+c})}});
 const rng=(el,p)=>el.style.setProperty("--p",p+"%");const mprog=p=>$("mp").style.setProperty("--mp",Math.max(0,Math.min(100,p))+"%");
-au.addEventListener("timeupdate",()=>{if(ymode)return;const d=au.duration||(cur&&cur.dur)||0,p=d?au.currentTime/d*1000:0;[$("seek"),$("fSeek")].forEach(s=>{if(!s.dataset.d){s.value=p;rng(s,p/10)}});mprog(p/10);$("cur").textContent=$("fCur").textContent=fmt(au.currentTime);$("dur").textContent=$("fDur").textContent=fmt(d)});
+au.addEventListener("timeupdate",()=>{if(ymode)return;const d=au.duration||(cur&&cur.dur)||0,p=d?au.currentTime/d*1000:0;[$("seek"),$("fSeek")].forEach(s=>{if(!s.dataset.d){s.value=p;rng(s,p/10)}});mprog(p/10);$("cur").textContent=$("fCur").textContent=fmt(au.currentTime);$("dur").textContent=$("fDur").textContent=fmt(d);msPos(d,au.currentTime)});
 [$("seek"),$("fSeek")].forEach(s=>{s.addEventListener("input",()=>{s.dataset.d=1;rng(s,s.value/10)});s.addEventListener("change",()=>{if(ymode&&yp){const d=yp.getDuration()||(cur&&cur.dur)||0;if(d)yp.seekTo(s.value/1000*d,true);delete s.dataset.d;return}const d=au.duration||(cur&&cur.dur)||0;if(d)au.currentTime=s.value/1000*d;delete s.dataset.d})});
 $("vol").value=ST.vol;rng($("vol"),ST.vol);$("vol").addEventListener("input",function(){au.volume=this.value/100;ST.vol=+this.value;try{yp&&yp.setVolume(ST.vol)}catch(e){}rng(this,this.value);save()});
 $("ppB").onclick=$("fPp").onclick=toggle;$("nxB").onclick=$("fNx").onclick=next;$("prB").onclick=$("fPr").onclick=prev;
@@ -106,7 +108,10 @@ $("fLike").onclick=e=>{if(cur)like(cur,e.currentTarget)};
 let lastQi=-1;const slide=c=>{const e=$("fCv");e.classList.remove("sl","sr");void e.offsetWidth;e.classList.add(c)};
 const openFull=()=>{if(!cur)return;$("full").classList.add("on");document.body.classList.add("fp");if(ymode)showYt(true)},closeFull=()=>{$("full").classList.remove("on");document.body.classList.remove("fp");if(ymode)showYt(true)};
 $("nowB").onclick=openFull;$("clB").onclick=closeFull;
-if("mediaSession" in navigator){const m=navigator.mediaSession;[["play",()=>{if(ymode&&yp)yp.playVideo();else au.play()}],["pause",()=>{if(ymode&&yp)yp.pauseVideo();else au.pause()}],["nexttrack",next],["previoustrack",prev]].forEach(a=>{try{m.setActionHandler(a[0],a[1])}catch(e){}})}
+if("mediaSession" in navigator){const m=navigator.mediaSession;[["play",()=>{if(ymode&&yp)yp.playVideo();else au.play()}],["pause",()=>{if(ymode&&yp)yp.pauseVideo();else au.pause()}],["nexttrack",next],["previoustrack",prev],
+  ["seekbackward",()=>seekBy(-10)],["seekforward",()=>seekBy(10)],["seekto",d=>seekTo(d.seekTime||0)]].forEach(a=>{try{m.setActionHandler(a[0],a[1])}catch(e){}})}
+function seekTo(t){try{if(ymode&&yp)yp.seekTo(t,true);else au.currentTime=t}catch(e){}}
+function seekBy(s){try{const c=ymode&&yp?yp.getCurrentTime():au.currentTime;seekTo(Math.max(0,c+s))}catch(e){}}
 document.addEventListener("keydown",e=>{if(/INPUT|TEXTAREA/.test(e.target.tagName)&&e.target.type!=="range")return;if(e.code==="Space"){e.preventDefault();toggle()}if(e.key==="ArrowRight"&&e.shiftKey)next();if(e.key==="ArrowLeft"&&e.shiftKey)prev();if(e.key==="Escape")closeFull()});
 function burst(el){const r=el.getBoundingClientRect();for(let i=0;i<7;i++){const h=document.createElement("div");h.className="hb";h.textContent=["💗","💖","✨","💞"][i%4];h.style.left=(r.left+r.width/2-9)+"px";h.style.top=(r.top+r.height/2-9)+"px";h.style.setProperty("--x",(Math.random()*90-45)+"px");h.style.animationDelay=(i*50)+"ms";document.body.appendChild(h);setTimeout(()=>h.remove(),1300)}}
 function like(t,btn){const i=ST.likes.findIndex(x=>x.id===t.id);if(i>=0)ST.likes.splice(i,1);else{ST.likes.unshift(t);if(btn)burst(btn)}save();const on=i<0;
@@ -225,11 +230,11 @@ swipe(main,{left:()=>goTab(1),right:()=>goTab(-1),skip:".shelf,.chips,.sb",min:7
 /* волна при нажатии */
 document.addEventListener("pointerdown",e=>{const b=e.target.closest("button");if(!b)return;const r=b.getBoundingClientRect(),d=Math.max(r.width,r.height),s=document.createElement("span");s.className="rpl";s.style.cssText="width:"+d+"px;height:"+d+"px;left:"+(e.clientX-r.left-d/2)+"px;top:"+(e.clientY-r.top-d/2)+"px";b.appendChild(s);setTimeout(()=>s.remove(),650)});
 /* настройки */
-const APP_VER="2.3";
+const APP_VER="2.4";
 $("ver").textContent=APP_VER;
 $("setX").onclick=$("setNo").onclick=()=>$("set").classList.remove("on");
 $("updB").onclick=async()=>{const b=$("updB");b.disabled=true;b.textContent="Обновляю…";try{if("serviceWorker" in navigator){const rs=await navigator.serviceWorker.getRegistrations();await Promise.all(rs.map(r=>r.unregister()))}if("caches" in window){const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)))}}catch(e){}location.replace(location.pathname+"?v="+Date.now())};
-$("setB").onclick=()=>{$("liteS").value=ST.lite||"auto";$("thS").value=ST.theme||"cover";$("yk").value=ST.yk;$("jk").value=ST.jk;$("set").classList.add("on")};
+$("setB").onclick=()=>{eqUI();$("liteS").value=ST.lite||"auto";$("thS").value=ST.theme||"cover";$("yk").value=ST.yk;$("jk").value=ST.jk;$("set").classList.add("on")};
 $("setNo").onclick=()=>$("set").classList.remove("on");
 $("setOk").onclick=()=>{ST.yk=$("yk").value.trim();ST.jk=$("jk").value.trim();ST.lite=$("liteS").value;ST.theme=$("thS").value;applyTheme();paintBg();applyLite(ST.lite==="on"||(ST.lite==="auto"&&liteAuto()));save();$("set").classList.remove("on");toast("Сохранено");show(view)};
 $("set").addEventListener("click",e=>{if(e.target===$("set"))$("set").classList.remove("on")});
@@ -282,6 +287,22 @@ $("lyIn").addEventListener("click",e=>{const p=e.target.closest("p[data-t]");if(
 /* ---------- тема ---------- */
 const applyTheme=()=>{document.documentElement.dataset.th=ST.theme||"cover";const m=document.querySelector('meta[name=theme-color]');if(m)m.content=ST.theme==="light"?"#f4f4f6":"#111111"};
 applyTheme();
+
+/* ---------- эквалайзер (только для треков не из YouTube) ---------- */
+let ac=null,eqN=null;
+ST.eqv=Array.isArray(ST.eqv)&&ST.eqv.length===3?ST.eqv:[0,0,0];
+const eqOn=()=>ST.eqv.some(v=>v!==0);
+function eqPrep(u){if(!eqOn()&&!ac){au.removeAttribute("crossorigin");return Promise.resolve()}
+  const c=new AbortController();
+  return fetch(u,{mode:"cors",signal:c.signal}).then(()=>{c.abort();au.crossOrigin="anonymous"},()=>{au.removeAttribute("crossorigin");if(eqOn())toast(ac?"Для этого источника эквалайзер не работает, будет тихо. Поставь «Выкл» и перезапусти":"Для этого источника эквалайзер не работает")})}
+function eqInit(){if(ac||au.crossOrigin!=="anonymous")return;try{const C=window.AudioContext||window.webkitAudioContext;ac=new C();const s=ac.createMediaElementSource(au),f=(t,fr,q)=>{const n=ac.createBiquadFilter();n.type=t;n.frequency.value=fr;if(q)n.Q.value=q;return n},lo=f("lowshelf",150),mi=f("peaking",1500,.9),hi=f("highshelf",6000);s.connect(lo);lo.connect(mi);mi.connect(hi);hi.connect(ac.destination);eqN=[lo,mi,hi]}catch(e){ac=null;eqN=null}}
+function eqApply(){if(!eqN)return;eqN.forEach((n,i)=>{n.gain.value=ST.eqv[i]});try{ac.resume()}catch(e){}}
+au.addEventListener("playing",()=>{if(eqOn()||ac){eqInit();eqApply()}});
+const EQP={off:[0,0,0],bass:[7,0,-1],vocal:[-2,4,2],bright:[-1,1,6],night:[3,-2,-3]};
+const eqUI=()=>{["eqB","eqM","eqT"].forEach((id,i)=>{$(id).value=ST.eqv[i];$(id+"v").textContent=(ST.eqv[i]>0?"+":"")+ST.eqv[i]});const k=Object.keys(EQP).find(k=>EQP[k].every((v,i)=>v===ST.eqv[i]));$("eqS").value=k||"custom"};
+const eqSet=v=>{const was=eqOn();ST.eqv=v;save();eqUI();if(ac){eqApply()}else if(!was&&eqOn()&&cur&&cur.src!=="YouTube")toast("Эквалайзер включится со следующего трека");if(ac&&!eqN)eqInit()};
+$("eqS").onchange=function(){if(EQP[this.value])eqSet(EQP[this.value].slice())};
+["eqB","eqM","eqT"].forEach((id,i)=>$(id).addEventListener("input",function(){const v=ST.eqv.slice();v[i]=+this.value;eqSet(v)}));
 const applyLite=on=>{document.documentElement.classList.toggle("lite",!!on);BG.lite(!!on)};
 const liteAuto=()=>{try{return matchMedia("(prefers-reduced-motion: reduce)").matches||(navigator.deviceMemory&&navigator.deviceMemory<=3)||(navigator.hardwareConcurrency&&navigator.hardwareConcurrency<=2)}catch(e){return false}};
 applyLite(ST.lite==="on"||(ST.lite!=="off"&&liteAuto()));
