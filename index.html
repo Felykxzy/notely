@@ -29,6 +29,8 @@ svg.i{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:2;stroke
 body.fp #bg{opacity:1}#veil{display:none}
 #app{position:fixed;inset:0;z-index:2;display:flex;flex-direction:column;background:var(--bg)}
 /* верх */
+#hubB{display:none}
+[data-hub] #hubB{display:inline-flex;align-items:center;margin-left:auto;height:34px;padding:0 14px;border-radius:99px;background:rgba(255,255,255,.12);color:var(--ink,#fff);font:700 13px/1 inherit;text-decoration:none;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);flex:none}
 #head{display:flex;align-items:center;gap:12px;padding:calc(12px + var(--sat)) calc(18px + var(--sr)) 8px var(--pad);flex:none}
 .ava{width:40px;height:40px;border-radius:50%;background:var(--grad);display:grid;place-items:center;font-weight:800;font-size:17px;color:#fff;flex:none;box-shadow:0 0 0 2px #ffffff22}
 .pill{display:flex;align-items:center;gap:9px;height:40px;padding:0 16px 0 13px;border-radius:999px;border:2px solid #ffffff2e;font-weight:800;font-size:16px;letter-spacing:-.01em}
@@ -245,6 +247,7 @@ html[data-th=light] .btn.g2{background:#ececf0;color:var(--ink)}
 html[data-th=light] #shW .pn{background:#fff}html[data-th=light] #shW .bk{background:#0006}
 .eqr{display:grid!important;grid-template-columns:78px 1fr 30px;align-items:center;gap:10px;margin-top:8px;text-align:left}.eqr input{width:100%;min-width:0;padding:0;border:0;background:none}.eqr output{width:26px;text-align:right;font-weight:700;font-size:13px;color:var(--mute)}
 </style>
+<script>(function(){var k="hubFrom",q=/[?&]from=hub/.test(location.search);try{if(q)sessionStorage.setItem(k,"1")}catch(e){}var f=q;try{f=f||sessionStorage.getItem(k)==="1"}catch(e){}var s=matchMedia("(display-mode: standalone)").matches||matchMedia("(display-mode: fullscreen)").matches||navigator.standalone;if(f&&!s)document.documentElement.setAttribute("data-hub","1")})();</script>
 </head>
 <body>
 <canvas id="bg" aria-hidden="true"></canvas><div id="veil"></div>
@@ -252,6 +255,7 @@ html[data-th=light] #shW .pn{background:#fff}html[data-th=light] #shW .bk{backgr
   <header id="head">
     <button class="ava" id="setB" aria-label="Настройки">N</button>
     <div class="pill"><i><b style="height:8px"></b><b style="height:16px"></b><b style="height:11px"></b><b style="height:18px"></b></i>Notely</div>
+    <a id="hubB" href="https://felykxzy.github.io/" aria-label="Вернуться в хаб игр">‹ Игры</a>
     <nav id="tabs" aria-label="Разделы"><div class="ind" id="ind"></div>
       <button class="tb on" data-v="home"><svg class="i f" viewBox="0 0 24 24"><path d="M12 2.5l9.500 8v10a1.500 1.500 0 0 1-1.500 1.500h-5v-7h-6v7H4a1.500 1.500 0 0 1-1.500-1.500v-10z"/></svg><span>Главная</span></button>
       <button class="tb" data-v="search"><svg class="i" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg><span>Поиск</span></button>

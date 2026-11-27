@@ -248,7 +248,7 @@ swipe(main,{left:()=>goTab(1),right:()=>goTab(-1),skip:".shelf,.chips,.sb",min:7
 /* волна при нажатии */
 document.addEventListener("pointerdown",e=>{const b=e.target.closest("button");if(!b)return;const r=b.getBoundingClientRect(),d=Math.max(r.width,r.height),s=document.createElement("span");s.className="rpl";s.style.cssText="width:"+d+"px;height:"+d+"px;left:"+(e.clientX-r.left-d/2)+"px;top:"+(e.clientY-r.top-d/2)+"px";b.appendChild(s);setTimeout(()=>s.remove(),650)});
 /* настройки */
-const APP_VER="2.4";
+const APP_VER="2.5";
 $("ver").textContent=APP_VER;
 $("setX").onclick=$("setNo").onclick=()=>$("set").classList.remove("on");
 $("updB").onclick=async()=>{const b=$("updB");b.disabled=true;b.textContent="Обновляю…";try{if("serviceWorker" in navigator){const rs=await navigator.serviceWorker.getRegistrations();await Promise.all(rs.map(r=>r.unregister()))}if("caches" in window){const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)))}}catch(e){}location.replace(location.pathname+"?v="+Date.now())};
